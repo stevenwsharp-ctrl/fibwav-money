@@ -14,6 +14,7 @@ Fibwave is **one file** (`index.html`). There is nothing to install. You can use
 
 - [Start in one minute](#start-in-one-minute)
 - [What is inside](#what-is-inside)
+- [Touch mode](#touch-mode)
 - [How to play music into Fibwave](#how-to-play-music-into-fibwave)
 - [Controls](#controls)
 - [Keyboard shortcuts](#keyboard-shortcuts)
@@ -83,6 +84,22 @@ About **90 scenes**, plus **36 Liquid Feedback presets** with an **Endless Mix**
 
 ---
 
+## Touch mode
+
+Play with the visuals by finger or mouse, with or without music. Click **✋ Touch & play** on the start card, or **✋ Touch** in the controls, or press **M**.
+
+| Action | What happens |
+|---|---|
+| **Draw** (drag a finger or the mouse) | Glowing trails follow you, the picture flows and swirls round your finger, and notes play like a harp: higher on the screen is a higher note. The notes are in the key of the song. |
+| **Tap** | A ripple, sparks and a bell note. |
+| **Hold still** | A Fibonacci bloom grows under your finger, with a soft chord. Let go to make it burst. |
+| **Flick** (a fast swipe) | A shockwave and a whoosh. |
+| **Two fingers** | Pinch to zoom, twist to turn. Let go and it springs back. |
+| **Three-finger tap** | A new scene. |
+| **Mouse wheel** / **Shift + drag** | Zoom / twist. |
+
+In **Liquid Feedback**, your light is painted into the flow itself. Without music, the visuals react to the notes you play.
+
 ## How to play music into Fibwave
 
 | Source | How |
@@ -92,6 +109,7 @@ About **90 scenes**, plus **36 Liquid Feedback presets** with an **Endless Mix**
 | **Virtual audio driver (Mac)** | Install a free virtual audio driver such as BlackHole. Then select it under **Sound input** to send the sound of any music app straight in, with no room noise. |
 | **Audio files** | Play MP3, WAV, FLAC or M4A files from your computer. You can also drag them onto the window. |
 | **Demo beat** | A built-in 118 BPM loop for testing. |
+| **✋ Touch & play** | No music needed: make light and notes with your fingers (see Touch mode). |
 
 ---
 
@@ -131,6 +149,7 @@ The control deck is at the bottom of the screen. It hides when you do not move t
 | **1 – 0** | Scenes 1 to 10 |
 | **Space** | Next scene |
 | **[ ]** | Previous or next preset (Liquid Feedback, Signal Synth, Your Photos) |
+| **M** | Touch mode on or off |
 | **R** | Random scene and look |
 | **O** | Random order on or off |
 | **A** | Auto-change speed |
