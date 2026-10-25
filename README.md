@@ -66,7 +66,7 @@ About **90 scenes**, plus **36 Liquid Feedback presets** with an **Endless Mix**
 | Space | Night Sky, Live Night Sky (real stars and planets for your location), Solar System, Moon Phases, Nebula Flow, Particle Galaxy, Earth from Orbit |
 | Fractals | Mandelbrot Zoom, Julia Set, Burning Ship, Newton, Phoenix, Apollonian Gasket, Mandelbox 3D, Fractal Bloom |
 | Sacred geometry | Flower of Life, Sri Yantra, Chakras, Yin-Yang & Bagua, Merkaba & Platonic Solids, Tree of Life, Giza & Eye of Horus |
-| Science | Strange Attractors, Harmonograph, DNA Helix, Cymatics, Quantum Orbitals, Hypercube 4D, Hopf Fibration, Torus Knots, Pendulum Wave, Spin in Water and Plasma |
+| Science | **DNA Coaster** (a roller-coaster ride around and through winding DNA, with RNA strands), Strange Attractors, Harmonograph, DNA Helix, Cymatics, Quantum Orbitals, Hypercube 4D, Hopf Fibration, Torus Knots, Pendulum Wave, Spin in Water and Plasma |
 | Equalizers | Mirror Lake EQ, Waterways EQ, Cascade EQ, Retro LED EQ, Radial Echo EQ, Helix EQ |
 | Your Photos | Drag your own photos onto the window. Fibwave animates them with the music. |
 
@@ -75,7 +75,9 @@ About **90 scenes**, plus **36 Liquid Feedback presets** with an **Endless Mix**
 - **Music brain:** Fibwave finds the tempo (BPM), the key, the drum hits, the build-ups and the drops. The visuals change on the beat and jump on a drop.
 - **Match style:** Fibwave guesses the style of the music (for example EDM, rock or ambient) and picks scenes that suit it.
 - **Music focus:** the visuals can follow only the kick drum, the vocals, the hi-hats or the bass.
-- **Auto and Random:** the scene changes every 8 to 55 beats, in order or at random.
+- **Auto and Random:** the scene changes every 8 to 55 beats, in order or at random. Random is the default.
+- **Song changes:** when the song changes a lot (verse to chorus, a breakdown, a key change, a new sound), the scene changes with it.
+- **Scene length:** scenes with a lot of change inside them (DNA Coaster, Liquid Feedback, Earth Flight) stay longer; simple scenes (Flower Fields, the EQs) change sooner.
 - **Guitar riffs:** Fibwave listens to a song for 20 seconds and writes 3 practice riffs in the song's key, with guitar tab.
 - **Offline copy:** one button saves a copy that works with no internet.
 
@@ -101,7 +103,7 @@ The control deck is at the bottom of the screen. It hides when you do not move t
 |---|---|
 | **Scene** | Selects a scene. |
 | **Preset** | Shows for Liquid Feedback, Signal Synth and Your Photos. Selects a preset, patch or photo. |
-| **Palette** | The colours. **Living Rainbow** follows the sound. |
+| **Palette** | The colours. **Living Rainbow** (the default) follows the sound. Select **Random** to change the palette with each scene. |
 | **Auto** | Changes the scene every 8, 13, 21, 34 or 55 beats (Fibonacci numbers). |
 | **Order** | In order, or Random (everything). |
 | **Gain** | How strongly Fibwave hears the music. |
