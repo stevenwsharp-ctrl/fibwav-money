@@ -1,5 +1,9 @@
 # Fibwave
 
+### ▶ Open Fibwave: **[https://stevenwsharp-ctrl.github.io/fibwav-money/](https://stevenwsharp-ctrl.github.io/fibwav-money/)**
+
+Repository: https://github.com/stevenwsharp-ctrl/fibwav-money
+
 **Music you can see.** Fibwave is a music visualizer that runs in your web browser. It listens to your music and turns the beat, the bass and the melody into moving light: golden-ratio spirals, fractals, oceans and mountains, liquid feedback trails, a video synth, the real night sky and more.
 
 Fibwave is **one file** (`index.html`). There is nothing to install. You can use it as it is, or change it with any AI assistant (Claude, ChatGPT, Gemini or another).
@@ -204,7 +208,9 @@ Fibwave is made to be changed. A guide for AI assistants is at the top of the co
 1. Make a new repository on GitHub.
 2. Upload `index.html` and this `README.md`.
 3. Open **Settings → Pages**. Set **Source** to **Deploy from a branch**, the branch to **main** and the folder to **/ (root)**. Click **Save**.
-4. After 1 to 3 minutes, your site is at `https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/`.
+4. After 1 to 3 minutes, the site is at https://stevenwsharp-ctrl.github.io/fibwav-money/
+
+   For your own copy, the address is `https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/`.
 
 ---
 
