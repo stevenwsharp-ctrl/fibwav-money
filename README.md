@@ -92,16 +92,17 @@ In Touch mode, the picture is **wet ink**. A small fluid simulation runs under e
 
 | Action | What happens |
 |---|---|
-| **Draw** (drag a finger or the mouse) | The picture is pushed and molded along your path. Fast strokes make it wet: its colours smear and flow like paint, and the wet edges catch the light. A glowing trail follows you. |
+| **Draw** (drag a finger or the mouse) | The picture is pushed and molded along your path. Fast strokes make it wet: its colours smear and flow like paint, and the wet edges catch the light. |
 | **Hold still** | You dive into the picture at that point: it opens up round your finger and slowly turns. A Fibonacci bloom grows. Let go to make it burst. |
 | **Tap** | A ripple and sparks. |
 | **Flick** (a fast swipe) | A shockwave. |
 | **Two fingers** | Pinch to zoom, twist to turn. Let go and it springs back. |
 | **Three-finger tap** | A new scene. |
 | **Mouse wheel** / **Shift + drag** | Zoom / twist. |
-| **↺ Clean** (or **C**) | Makes the picture clean again at once. |
+| **〰 Line** (or **X**) | Draws a glowing line where you touch. Click to change: **off** (the default) → **fading** (a trail behind your finger) → **locked** (lines stay where you drew them, so you can draw on top of the moving picture). |
+| **↺ Clean** (or **C**) | Makes the picture clean again at once, and removes all lines. |
 
-The small buttons at the top right are **♪ Sound**, **↺ Clean** and **✕ Leave**.
+The small buttons at the top right are **〰 Line**, **♪ Sound**, **↺ Clean** and **✕ Leave**.
 
 ### Touch sound
 
@@ -176,6 +177,7 @@ The control deck is at the bottom of the screen. It hides when you do not move t
 | **[ ]** | Previous or next preset (Liquid Feedback, Signal Synth, Your Photos) |
 | **M** | Touch mode on or off |
 | **V** | Touch sound on or off |
+| **X** | Touch line: off, fading or locked |
 | **R** | Random scene and look |
 | **O** | Random order on or off |
 | **A** | Auto-change speed |

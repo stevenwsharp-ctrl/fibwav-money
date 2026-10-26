@@ -104,7 +104,7 @@ body.touchmode #gl,body.touchmode #c{cursor:crosshair}
 #tmBar{position:fixed;right:max(12px,env(safe-area-inset-right));top:calc(12px + env(safe-area-inset-top));z-index:8;display:none;gap:6px;opacity:.45;transition:opacity .3s}
 body.touchmode #tmBar{display:flex}#tmBar:hover,#tmBar:focus-within{opacity:1}
 #tmBar button{background:var(--panel);border:1px solid var(--line);border-radius:999px;color:inherit;padding:8px 13px;font:inherit;font-size:13px;cursor:pointer;min-height:38px}
-#tmBar button.on,#bTouchSnd.on{border-color:var(--gold);color:var(--gold)}
+#tmBar button.on,#bTouchSnd.on,#bTouchLine.on{border-color:var(--gold);color:var(--gold)}
 #showUi{position:fixed;top:calc(12px + env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:7;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;opacity:0;transition:opacity .4s}
 body.locked #showUi:hover,body.locked #showUi:focus-visible{opacity:1}
 body:not(.locked) #showUi{display:none}
@@ -236,11 +236,12 @@ body:not(.locked) #showUi{display:none}
     <button class="btn" id="bPip" title="Picture in picture: a floating window with no Chrome bars at all (Q)">Picture in picture</button>
     <button class="btn" id="bFs">Full screen</button>
     <button class="btn" id="bTouch" title="Play with the visuals by finger or mouse (M)">✋ Touch</button>
+    <button class="btn" id="bTouchLine" title="Draw a line: off, fading or locked (X)">〰 Line off</button>
     <button class="btn" id="bTouchSnd" title="Notes when you touch the visuals (V)">♪ Sound off</button>
     <button class="btn" id="bHide">Hide</button>
   </div>
 </div>
-<div id="tmBar"><button id="tmSnd" title="Notes when you touch (V)">♪ Sound off</button><button id="tmClear" title="Make the picture clean again (C)">↺ Clean</button><button id="tmExit" title="Leave touch mode (M)">✕ Leave</button></div>
+<div id="tmBar"><button id="tmLine" title="Draw a line: off, fading or locked (X)">〰 Line off</button><button id="tmSnd" title="Notes when you touch (V)">♪ Sound off</button><button id="tmClear" title="Make the picture clean again (C)">↺ Clean</button><button id="tmExit" title="Leave touch mode (M)">✕ Leave</button></div>
 <div id="startHint" hidden><b>Double-click the screen</b> to hide the controls.<br>Double-click again to show them.<br><kbd>←</kbd> <kbd>→</kbd> scene &nbsp;·&nbsp; <kbd>↑</kbd> <kbd>↓</kbd> colours</div>
 <div id="riffs" hidden>
   <div class="rh" title="Drag to move · drag the corner to resize · double-click to reset"><b>⠿ Guitar riffs</b><span><label class="capo">Capo <select id="gtCapo" aria-label="Capo"><option value="0">none</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></label> <button id="gtNew" title="Forget this song and listen again">New song</button> <button id="gtClose">Close</button></span></div>
@@ -1081,7 +1082,7 @@ void main(){
   {vec2 tx=1./vec2(textureSize(uT,0));vec3 a1=texture(uT,q+tx*vec2(-1.,-1.)).rgb,a2=texture(uT,q+tx*vec2(1.,-1.)).rgb,a3=texture(uT,q+tx*vec2(-1.,1.)).rgb,a4=texture(uT,q+tx*vec2(1.,1.)).rgb;
    vec3 lw=vec3(.299,.587,.114);float l1=dot(a1,lw),l2=dot(a2,lw),l3=dot(a3,lw),l4=dot(a4,lw),lc=dot(c,lw);float mx=max(max(max(l1,l2),max(l3,l4)),lc),mn=min(min(min(l1,l2),min(l3,l4)),lc);
    float edge=(mx-mn)/(mx+.08);c=mix(c,(a1+a2+a3+a4+c*2.)/6.,smoothstep(.25,.75,edge)*.6);}     // soften jagged edges, keep soft textures
-  if(uInkOn>.5&&INK.z>.002){c=mix(c,texture(uWet,uv).rgb,clamp(INK.z,0.,1.)*.978);   // wet paint carried by the flow
+  if(uInkOn>.5&&INK.z>.002){c=mix(c,texture(uWet,uv).rgb,clamp(INK.z*2.,0.,1.));   // wet paint carried by the flow
     vec2 it=1./vec2(textureSize(uInk,0));float wx=texture(uInk,uv+vec2(it.x,0.)).z-texture(uInk,uv-vec2(it.x,0.)).z,wy=texture(uInk,uv+vec2(0.,it.y)).z-texture(uInk,uv-vec2(0.,it.y)).z;
     c+=(c*.6+vec3(.05))*clamp(dot(vec2(wx,wy),vec2(-.55,.8))*1.6,0.,1.)*.5;}                 // and its wet edges catch the light
   c+=texture(uBloom,q).rgb*uGlow*(1.+uDrop*1.5+uImp);
@@ -4962,13 +4963,14 @@ const DNA_COASTER={name:'DNA Coaster',kind:'gl',fs:FS_DNACOAST,rs0:0.45,rsMax:0.
 /* =====================================================================
    TOUCH MODE — play with the visuals by finger or mouse
    The picture is wet ink: drag through it and it moves, swirls and keeps the shape (see WET INK).
-   Draw: light trails (and, with sound on, notes in the song's key, like a harp).
+   Draw: the picture moves with you (and, with sound on, notes play in the song's key, like a harp).
+   Line (option): off, fading (a glowing trail behind your finger) or locked (the line stays where you drew it).
    Tap: a ripple.   Hold still: dive into the picture there, and a Fibonacci bloom grows; let go to burst it.
    Flick: a shockwave.   Two fingers: pinch to zoom, twist to turn (it springs back).
    Three-finger tap: a new scene.   Mouse: drag to draw, wheel to zoom, Shift + drag to twist.
    It works in every scene. In Liquid Feedback your light is painted into the flow itself.
    ===================================================================== */
-const TM={on:false,sound:(()=>{try{return localStorage.getItem('fibwave.touchSound')==='1'}catch(e){return false}})(),ptr:new Map(),rib:[],spk:[],rip:[],forces:[],zoom:1,zv:0,rot:0,rv:0,pinch:null,threeT:0,lastNote:0,pad:null,out:null,idleHint:0};
+const TM={line:(()=>{try{return localStorage.getItem('fibwave.touchLine')||'off'}catch(e){return 'off'}})(),on:false,sound:(()=>{try{return localStorage.getItem('fibwave.touchSound')==='1'}catch(e){return false}})(),ptr:new Map(),rib:[],spk:[],rip:[],forces:[],zoom:1,zv:0,rot:0,rv:0,pinch:null,threeT:0,lastNote:0,pad:null,out:null,idleHint:0};
 const TM_SCALE=()=>{const minor=live&&A.tonal>0.4?A.keyMinor:false;return minor?[0,3,5,7,10]:[0,2,4,7,9]};
 const tmRoot=()=>live&&A.tonal>0.4?A.keyRoot:0;
 function tmPos(e){const r=ov.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*ov.width,y:(e.clientY-r.top)/r.height*ov.height,
@@ -5041,6 +5043,14 @@ function tmWhoosh(u,v){
   const g=actx.createGain();g.gain.value=0.5;const pan=actx.createStereoPanner?actx.createStereoPanner():null;
   n.connect(f);f.connect(g);if(pan){pan.pan.value=clamp(u*2-1,-1,1);g.connect(pan);pan.connect(TM.out);pan.connect(TM.send)}else{g.connect(TM.out);g.connect(TM.send)}n.start(t);
 }
+function tmLine(mode){
+  TM.line=mode||{off:'fade',fade:'lock',lock:'off'}[TM.line];
+  if(TM.line!=='lock')TM.rib.forEach(r=>r.lock=false);              // leaving Locked: the old lines fade away
+  try{localStorage.setItem('fibwave.touchLine',TM.line)}catch(e){}
+  const t={off:'〰 Line off',fade:'〰 Line: fading',lock:'〰 Line: locked'}[TM.line];
+  for(const id of ['tmLine','bTouchLine']){const b=document.getElementById(id);if(b){b.textContent=t;b.classList.toggle('on',TM.line!=='off')}}
+  toast({off:'Line off: only the picture moves',fade:'Line on: a glowing trail fades behind your finger',lock:'Line locked: lines stay where you draw them (↺ Clean removes them)'}[TM.line]);
+}
 function tmSound(on){
   TM.sound=on;if(on)tmAudio();else tmPadStop();
   try{localStorage.setItem('fibwave.touchSound',on?'1':'0')}catch(e){}
@@ -5054,7 +5064,7 @@ function tmRipple(u,v,str){TM.rip.push({u,v,age:0,str});if(TM.rip.length>6)TM.ri
 function tmDown(e){
   const P=tmPos(e),now=performance.now();
   const p={id:e.pointerId,x:P.x,y:P.y,u:P.u,v:P.v,x0:P.x,y0:P.y,t0:now,lt:now,vx:0,vy:0,still:0,bloom:0,pts:[{x:P.x,y:P.y}],hue:Math.random(),lastStep:-1,moved:0,twist:e.shiftKey&&e.pointerType==='mouse'};
-  TM.ptr.set(e.pointerId,p);TM.rib.push(p.rib={pts:p.pts,life:1,hue:p.hue,alive:true});
+  TM.ptr.set(e.pointerId,p);TM.rib.push(p.rib={pts:p.pts,life:1,hue:p.hue,alive:true,lock:TM.line==='lock'});if(TM.rib.filter(r=>r.lock).length>80)TM.rib.splice(TM.rib.findIndex(r=>r.lock),1);
   if(TM.ptr.size===3)TM.threeT=now;
   if(TM.ptr.size>=2)tmPinchStart();
   p.lastStep=Math.floor(clamp(P.v,0,0.999)*15);p.lastZone=tmZone(P.u);
@@ -5065,7 +5075,7 @@ function tmMove(e){
   if(p.twist){TM.rv+=(P.x-p.x)/ov.width*4;p.x=P.x;p.y=P.y;p.lt=now;return}
   const dx=P.x-p.x,dy=P.y-p.y;p.vx=p.vx*0.6+dx/dt*0.4;p.vy=p.vy*0.6+dy/dt*0.4;p.moved+=Math.hypot(dx,dy);
   p.x=P.x;p.y=P.y;p.u=P.u;p.v=P.v;p.lt=now;
-  p.pts.push({x:P.x,y:P.y});if(p.pts.length>90)p.pts.shift();
+  p.pts.push({x:P.x,y:P.y});if(p.pts.length>(p.rib.lock?3000:90))p.pts.shift();   // a locked line keeps its whole path; a fading one only its tail
   if(TM.ptr.size>=2&&TM.pinch){tmPinchMove();return}
   const sp=Math.hypot(p.vx,p.vy);
   if(sp>60*DPR)tmSpark(P.x,P.y,p.vx*0.04,p.vy*0.04,Math.min(4,1+sp/(900*DPR)|0),0.8*DPR);
@@ -5090,7 +5100,7 @@ function tmPinchMove(){const [a,b]=[...TM.ptr.values()],P=TM.pinch;if(!P||!b)ret
   TM.zoom=clamp(P.z*Math.hypot(a.x-b.x,a.y-b.y)/Math.max(10,P.d),0.4,4);TM.rot=P.r+(Math.atan2(b.y-a.y,b.x-a.x)-P.a);TM.zv=0;TM.rv=0}
 /* ---------- every frame ---------- */
 function tmFrame(dt){
-  if(!TM.on&&!TM.rib.length&&!TM.spk.length)return;
+  if(!TM.on&&!TM.spk.length&&!TM.rib.some(r=>!r.lock))return;
   const now=performance.now();
   // the zoom and turn spring back (with a little wobble) when the fingers let go
   if(!TM.pinch){TM.zv+=(1-TM.zoom)*dt*28;TM.zv*=Math.pow(0.02,dt);TM.zoom+=TM.zv*dt;TM.rv+=(0-TM.rot)*dt*22;TM.rv*=Math.pow(0.03,dt);TM.rot+=TM.rv*dt}
@@ -5101,7 +5111,7 @@ function tmFrame(dt){
   }
   for(const r of TM.rip)r.age+=dt*0.9;TM.rip=TM.rip.filter(r=>r.age<1);
   for(const f of TM.forces)f.life-=dt*1.3;TM.forces=TM.forces.filter(f=>f.life>0);
-  for(const r of TM.rib)if(!r.alive)r.life-=dt*0.7;TM.rib=TM.rib.filter(r=>r.life>0);
+  for(const r of TM.rib)if(!r.alive&&!r.lock)r.life-=dt*0.7;TM.rib=TM.rib.filter(r=>r.life>0);
   const drag=Math.pow(0.25,dt);for(const s of TM.spk){s.x+=s.vx*dt*60;s.y+=s.vy*dt*60;s.vx*=drag;s.vy*=drag;s.life-=dt*0.55}TM.spk=TM.spk.filter(s=>s.life>0);
 }
 // the forces the post shader and Liquid Feedback use: fingers that are down, and ones just let go
@@ -5123,7 +5133,7 @@ function tmDraw(){
   if(!TM.rib.length&&!TM.spk.length&&!TM.ptr.size)return;
   const c=octx;c.save();c.globalCompositeOperation='lighter';c.lineCap='round';c.lineJoin='round';
   const beat=1+RA.kick*0.6+RA.bass*0.3;
-  for(const r of TM.rib){const P=r.pts;if(P.length<2)continue;
+  if(TM.line!=='off')for(const r of TM.rib){const P=r.pts;if(P.length<2)continue;
     for(const [w,a] of [[34,0.10],[14,0.30],[5,0.95]]){
       c.beginPath();c.moveTo(P[0].x,P[0].y);
       for(let i=1;i<P.length-1;i++){const mx=(P[i].x+P[i+1].x)/2,my=(P[i].y+P[i+1].y)/2;c.quadraticCurveTo(P[i].x,P[i].y,mx,my)}
@@ -5187,7 +5197,7 @@ void main(){vec2 uv=UV;
   vec2 asp=vec2(uAsp,1.);
   for(int i=0;i<8;i++){if(i>=uN)break;
     vec2 p=uv*asp,a=uFP[i].xy*asp,b=uF[i].xy*asp;float d=segD(p,a,b);
-    float g=exp(-d*d/.0026);v+=(uF[i].zw-v)*g*.8;                                   // the ink along your path moves with you
+    float g=exp(-d*d/.007);v+=(uF[i].zw-v)*g*.4;                                    // the ink along your path is stirred along with you
     vec2 dp=p-b;float gh=exp(-dot(dp,dp)/.014);v+=vec2(-dp.y,dp.x)/(length(dp)+.03)*uFP[i].w*gh*uDt*70.;}  // a held finger stirs slowly
   float m=length(v);if(m>900.)v*=900./m;
   o=vec4(v,0.,1.);}`;
@@ -5210,10 +5220,10 @@ void main(){vec2 uv=UV;vec2 v=texture(uV,uv).xy*uTx;
   vec2 asp=vec2(uAsp,1.);
   for(int i=0;i<8;i++){if(i>=uN)break;
     vec2 p=uv*asp,a=uFP[i].xy*asp,b=uF[i].xy*asp;float d=segD(p,a,b),sp=length(uF[i].zw*uTx);
-    w=max(w,exp(-d*d/.0045)*clamp(sp*.8-.05,0.,1.));                               // a moving finger wets the picture
+    w=max(w,exp(-d*d/.0045)*clamp(sp*.6-.15,0.,1.)*.85);                          // a fast finger wets the picture
     vec2 dp=uv-uF[i].xy;float gh=exp(-dot(dp*asp,dp*asp)/.03);
-    O+=(-dp*.82-O)*clamp(gh*uFP[i].z*uDt*1.1,0.,1.);}                               // holding still: dive into the picture there
-  float m=length(O);if(m>.6)O*=.6/m;
+    O+=(-dp*.6-O)*clamp(gh*uFP[i].z*uDt*1.1,0.,1.);}                                // holding still: dive into the picture there
+  float m=length(O);if(m>.45)O*=.45/m;
   o=vec4(O,clamp(w,0.,1.),1.);}`;
 // wet colour: where the ink is wet, the picture's colour is carried along by the flow, like paint
 const FS_FL_WET=`#version 300 es
@@ -5221,7 +5231,8 @@ precision highp float;uniform sampler2D uS,uW,uI,uV;uniform vec2 uOut,uTx;unifor
 void main(){vec2 uv=gl_FragCoord.xy/uOut;vec4 I=texture(uI,uv);
   vec2 q=1.-abs(1.-mod(abs(uv+I.xy),2.));vec3 s=texture(uS,q).rgb;
   vec3 p=texture(uW,uv-uDt*texture(uV,uv).xy*uTx).rgb;
-  o=vec4(mix(s,p,clamp(I.z,0.,1.)*.978),1.);}`;
+  vec3 lw=vec3(.299,.587,.114);vec3 m=dot(p,lw)*.985>dot(s,lw)?p*.985:s;          // wet paint carries light only: dark never smears over bright
+  o=vec4(mix(s,m,clamp(I.z,0.,1.)*.95),1.);}`;
 function flInit(){
   if(!GLOK||!G.fmt||G.fmt.ifmt!==gl.RGBA16F)return;            // needs floating-point render targets; without them Touch mode uses the simpler bend
   try{FL.P={curl:glProg(FSQ_VS,FS_FL_CURL),vel:glProg(FSQ_VS,FS_FL_VEL),div:glProg(FSQ_VS,FS_FL_DIV),prs:glProg(FSQ_VS,FS_FL_PRS),grad:glProg(FSQ_VS,FS_FL_GRAD),
@@ -6396,7 +6407,9 @@ function setLocked(on){
 document.getElementById('bHide').onclick=()=>setLocked(true);
 document.getElementById('bTouch').onclick=()=>tmSet(!TM.on);
 document.getElementById('bTouchSnd').onclick=document.getElementById('tmSnd').onclick=()=>tmSound(!TM.sound);
-document.getElementById('tmExit').onclick=()=>tmSet(false);document.getElementById('tmClear').onclick=()=>{flClear();toast('Clean picture')};
+document.getElementById('tmExit').onclick=()=>tmSet(false);document.getElementById('tmClear').onclick=()=>{flClear();TM.rib=[];toast('Clean picture')};
+document.getElementById('tmLine').onclick=document.getElementById('bTouchLine').onclick=()=>tmLine();
+for(const id of ['tmLine','bTouchLine']){const b=document.getElementById(id);b.textContent={off:'〰 Line off',fade:'〰 Line: fading',lock:'〰 Line: locked'}[TM.line]||'〰 Line off';b.classList.toggle('on',TM.line!=='off')}
 for(const id of ['tmSnd','bTouchSnd']){const b=document.getElementById(id);b.classList.toggle('on',TM.sound);b.textContent=TM.sound?'♪ Sound on':'♪ Sound off'}
 document.getElementById('srcTouch').onclick=()=>{ensureCtx();if(!live)srcLabel='TOUCH & PLAY';hideStart();tmSet(true)};
 document.getElementById('showUi').onclick=()=>setLocked(false);
@@ -6417,6 +6430,7 @@ addEventListener('keydown',e=>{
   else if(k==='r'){randomNow()}
   else if(k==='m'){tmSet(!TM.on)}
   else if(k==='v'){tmSound(!TM.sound)}
+  else if(k==='x'){tmLine()}
   else if(k==='['){if(HAS_PRESETS(sceneKind()))presetNext(-1);else setScene(nextScene(-1))}
   else if(k===']'){if(HAS_PRESETS(sceneKind()))presetNext(1);else setScene(nextScene(1))}
   else if(k==='k'){S.keyColor=!S.keyColor;document.getElementById('keycol').checked=S.keyColor;toast(S.keyColor?'Key colours on':'Key colours off')}
@@ -6438,7 +6452,7 @@ addEventListener('keydown',e=>{
   else if(k==='q'){POP.w&&POP.pip?popIn():pipOut()}
   else if(k==='y'){const o=['off','slow','music','hits'],sp=document.getElementById('spinSel');sp.value=o[(o.indexOf(S.spin)+1)%4];sp.dispatchEvent(new Event('change'))}
   else if(k==='t'){tvMode();return}
-  else if(k==='c'){if(TM.on){flClear();toast('Clean picture')}else castEl.hidden=!castEl.hidden}
+  else if(k==='c'){if(TM.on){flClear();TM.rib=[];toast('Clean picture')}else castEl.hidden=!castEl.hidden}
   else if(k==='h'){setLocked(!uiLocked);return}
   else if(k==='escape'){if(!lightsEl.hidden)lightsEl.hidden=true;else if(!castEl.hidden)castEl.hidden=true;else if(!screensEl.hidden)screensEl.hidden=true;else if(!start.hidden&&live)hideStart()}
   else if(k==='n'&&playlist.length&&mediaEl){track=(track+1)%playlist.length;playTrack()}
