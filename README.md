@@ -88,17 +88,42 @@ About **90 scenes**, plus **36 Liquid Feedback presets** with an **Endless Mix**
 
 Play with the visuals by finger or mouse, with or without music. Click **✋ Touch & play** on the start card, or **✋ Touch** in the controls, or press **M**.
 
+In Touch mode, the picture is **wet ink**. A small fluid simulation runs under every scene. When you move through the picture, it moves with you: it swirls, curls and keeps the shape you gave it. Then it slowly settles back.
+
 | Action | What happens |
 |---|---|
-| **Draw** (drag a finger or the mouse) | Glowing trails follow you, the picture flows and swirls round your finger, and notes play like a harp: higher on the screen is a higher note. The notes are in the key of the song. |
-| **Tap** | A ripple, sparks and a bell note. |
-| **Hold still** | A Fibonacci bloom grows under your finger, with a soft chord. Let go to make it burst. |
-| **Flick** (a fast swipe) | A shockwave and a whoosh. |
+| **Draw** (drag a finger or the mouse) | The picture is pushed and molded along your path. Fast strokes make it wet: its colours smear and flow like paint, and the wet edges catch the light. A glowing trail follows you. |
+| **Hold still** | You dive into the picture at that point: it opens up round your finger and slowly turns. A Fibonacci bloom grows. Let go to make it burst. |
+| **Tap** | A ripple and sparks. |
+| **Flick** (a fast swipe) | A shockwave. |
 | **Two fingers** | Pinch to zoom, twist to turn. Let go and it springs back. |
 | **Three-finger tap** | A new scene. |
 | **Mouse wheel** / **Shift + drag** | Zoom / twist. |
+| **↺ Clean** (or **C**) | Makes the picture clean again at once. |
 
-In **Liquid Feedback**, your light is painted into the flow itself. Without music, the visuals react to the notes you play.
+The small buttons at the top right are **♪ Sound**, **↺ Clean** and **✕ Leave**.
+
+### Touch sound
+
+Sound is **off** at the start. Click **♪ Sound off** (or press **V**) to turn it on. Fibwave remembers your choice.
+
+When the sound is on, where you touch changes the sound:
+
+| Where | Sound |
+|---|---|
+| **Left to right** | Five instruments: Marimba · Pluck · Bell · Glass · Air |
+| **Low to high** | Low notes and a soft tone at the bottom; high notes and a bright tone at the top |
+| **Near the edges** | More echo |
+| **The four corners** | A strummed chord |
+| **Drag** | Notes play like a harp when you cross a step of the scale or into a new instrument |
+| **Hold still** | A soft chord in the sound of that part of the screen |
+| **Flick** | A whoosh: higher when it is high on the screen |
+
+All notes are in the key of the song. Without music, the visuals react to the notes you play.
+
+In **Liquid Feedback**, your light is also painted into the flow itself.
+
+To change how the ink feels, ask your AI to change `FL.relax` (how fast the shape settles back), `FL.dry` (how fast wet paint dries), `FL.vort` (how curly the flow is) or `FL.visc` (how thick the ink is). To change the instruments, ask it to change `TM_INSTR` and `tmVoice`.
 
 ## How to play music into Fibwave
 
@@ -109,7 +134,7 @@ In **Liquid Feedback**, your light is painted into the flow itself. Without musi
 | **Virtual audio driver (Mac)** | Install a free virtual audio driver such as BlackHole. Then select it under **Sound input** to send the sound of any music app straight in, with no room noise. |
 | **Audio files** | Play MP3, WAV, FLAC or M4A files from your computer. You can also drag them onto the window. |
 | **Demo beat** | A built-in 118 BPM loop for testing. |
-| **✋ Touch & play** | No music needed: make light and notes with your fingers (see Touch mode). |
+| **✋ Touch & play** | No music needed: mold the picture like wet ink with your fingers. Sound is optional (see Touch mode). |
 
 ---
 
@@ -150,6 +175,7 @@ The control deck is at the bottom of the screen. It hides when you do not move t
 | **Space** | Next scene |
 | **[ ]** | Previous or next preset (Liquid Feedback, Signal Synth, Your Photos) |
 | **M** | Touch mode on or off |
+| **V** | Touch sound on or off |
 | **R** | Random scene and look |
 | **O** | Random order on or off |
 | **A** | Auto-change speed |
@@ -166,7 +192,7 @@ The control deck is at the bottom of the screen. It hides when you do not move t
 | **T** | TV mode (full screen, no controls) |
 | **W** | Pop-out window |
 | **Q** | Picture in picture |
-| **C** | TV help |
+| **C** | TV help (in Touch mode: clean picture) |
 | **Esc** | Close a panel |
 
 ---

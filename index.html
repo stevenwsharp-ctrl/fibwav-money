@@ -101,6 +101,10 @@ input[type=range]{accent-color:var(--gold);width:90px}
 body.touchmode,body.touchmode canvas{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
 body.touchmode #gl,body.touchmode #c{cursor:crosshair}
 #bTouch.on{border-color:var(--gold);color:var(--gold)}
+#tmBar{position:fixed;right:max(12px,env(safe-area-inset-right));top:calc(12px + env(safe-area-inset-top));z-index:8;display:none;gap:6px;opacity:.45;transition:opacity .3s}
+body.touchmode #tmBar{display:flex}#tmBar:hover,#tmBar:focus-within{opacity:1}
+#tmBar button{background:var(--panel);border:1px solid var(--line);border-radius:999px;color:inherit;padding:8px 13px;font:inherit;font-size:13px;cursor:pointer;min-height:38px}
+#tmBar button.on,#bTouchSnd.on{border-color:var(--gold);color:var(--gold)}
 #showUi{position:fixed;top:calc(12px + env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:7;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;opacity:0;transition:opacity .4s}
 body.locked #showUi:hover,body.locked #showUi:focus-visible{opacity:1}
 body:not(.locked) #showUi{display:none}
@@ -155,7 +159,7 @@ body:not(.locked) #showUi{display:none}
       <button class="src primary" id="srcTab"><b>Sound from another tab</b><span>Play your music in a different Chrome tab. In the share window, select that tab and turn on “Share tab audio”.</span></button>
       <button class="src" id="srcMic"><b>Microphone or BlackHole</b><span>Room sound, or select a virtual audio driver below to take the sound of any music app straight in. No sharing bar at all.</span></button>
       <button class="src" id="srcFile"><b>Audio files</b><span>Play MP3, WAV, FLAC or M4A files from your computer.</span></button>
-      <button class="src primary" id="srcTouch"><b>✋ Touch &amp; play</b><span>No music needed. Draw, tap and hold to make light and notes. Works with music too.</span></button>
+      <button class="src primary" id="srcTouch"><b>✋ Touch &amp; play</b><span>No music needed. The picture becomes wet ink: drag through it, mold it, dive in. Sound is optional. Works with music too.</span></button>
       <button class="src" id="srcDemo"><b>Demo beat</b><span>A built-in 118 BPM loop to test the visuals.</span></button>
       <div class="inrow">
         <label class="ctl" for="micSel">Sound input</label>
@@ -232,9 +236,11 @@ body:not(.locked) #showUi{display:none}
     <button class="btn" id="bPip" title="Picture in picture: a floating window with no Chrome bars at all (Q)">Picture in picture</button>
     <button class="btn" id="bFs">Full screen</button>
     <button class="btn" id="bTouch" title="Play with the visuals by finger or mouse (M)">✋ Touch</button>
+    <button class="btn" id="bTouchSnd" title="Notes when you touch the visuals (V)">♪ Sound off</button>
     <button class="btn" id="bHide">Hide</button>
   </div>
 </div>
+<div id="tmBar"><button id="tmSnd" title="Notes when you touch (V)">♪ Sound off</button><button id="tmClear" title="Make the picture clean again (C)">↺ Clean</button><button id="tmExit" title="Leave touch mode (M)">✕ Leave</button></div>
 <div id="startHint" hidden><b>Double-click the screen</b> to hide the controls.<br>Double-click again to show them.<br><kbd>←</kbd> <kbd>→</kbd> scene &nbsp;·&nbsp; <kbd>↑</kbd> <kbd>↓</kbd> colours</div>
 <div id="riffs" hidden>
   <div class="rh" title="Drag to move · drag the corner to resize · double-click to reset"><b>⠿ Guitar riffs</b><span><label class="capo">Capo <select id="gtCapo" aria-label="Capo"><option value="0">none</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></label> <button id="gtNew" title="Forget this song and listen again">New song</button> <button id="gtClose">Close</button></span></div>
@@ -319,8 +325,8 @@ body:not(.locked) #showUi{display:none}
 
    MAIN PARTS OF THIS FILE (search for these words)
    settings · audio · MUSIC ANALYSIS · GPU ENGINE · NATURE & WORLDS · QUANTUM · YOUR PHOTOS ·
-   SCIENCE · FRACTALS · ASTRONOMY · SONG MANDALA · LIQUID FEEDBACK · SIGNAL SYNTH · ROOM LIGHTS ·
-   Guitar riffs · full screen · offline copy
+   SCIENCE · FRACTALS · ASTRONOMY · SONG MANDALA · LIQUID FEEDBACK · SIGNAL SYNTH · DNA COASTER ·
+   TOUCH MODE · WET INK · ROOM LIGHTS · Guitar riffs · full screen · offline copy
    ===================================================================================== */
 'use strict';
 const PHI=(1+Math.sqrt(5))/2, TAU=Math.PI*2, GA=Math.PI*(3-Math.sqrt(5)), Q=Math.PI/2, DEG=Math.PI/180;
@@ -1047,17 +1053,18 @@ precision highp float;uniform sampler2D uT;uniform vec2 uHp,uOut;out vec4 o;
 void main(){vec2 uv=gl_FragCoord.xy/uOut;vec3 s=texture(uT,uv+vec2(-uHp.x*2.,0.)).rgb+texture(uT,uv+vec2(uHp.x*2.,0.)).rgb+texture(uT,uv+vec2(0.,-uHp.y*2.)).rgb+texture(uT,uv+vec2(0.,uHp.y*2.)).rgb
   +(texture(uT,uv+uHp).rgb+texture(uT,uv-uHp).rgb+texture(uT,uv+vec2(uHp.x,-uHp.y)).rgb+texture(uT,uv+vec2(-uHp.x,uHp.y)).rgb)*2.;o=vec4(s/12.,1.);}`;
 const FS_POST=`#version 300 es
-precision highp float;uniform sampler2D uT,uBloom,uHold;uniform vec2 uOut,uShake;uniform float uTZoom,uTRot;uniform vec4 uTF[6],uTR[6];uniform float uTL[6],uTS[6];uniform float uOled;uniform float uGlow,uPulse,uTime,uFilm,uHdr,uSnare,uDrop,uImp,uShock,uFold,uTrans,uTType,uFlash,uWarm,uBrt,uHarsh,uTim,uDyn;out vec4 o;
+precision highp float;uniform sampler2D uT,uBloom,uHold,uInk,uWet;uniform float uInkOn;uniform vec2 uOut,uShake;uniform float uTZoom,uTRot;uniform vec4 uTF[6],uTR[6];uniform float uTL[6],uTS[6];uniform float uOled;uniform float uGlow,uPulse,uTime,uFilm,uHdr,uSnare,uDrop,uImp,uShock,uFold,uTrans,uTType,uFlash,uWarm,uBrt,uHarsh,uTim,uDyn;out vec4 o;
 float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
 vec3 shoulder(vec3 x){vec3 k=vec3(.78);return mix(x,k+(1.-k)*(1.-exp(-(x-k)/(1.-k))),step(k,x));}
 void main(){
   vec2 uv=gl_FragCoord.xy/uOut;float asp=uOut.x/uOut.y;
-  vec2 q=uv+uShake;
+  vec4 INK=vec4(0.);if(uInkOn>.5)INK=texture(uInk,uv);         // touch: the picture is wet ink, moved and molded by your hands
+  vec2 q=uv+INK.xy+uShake;
   q=.5+(q-.5)/(1.+uImp*.08);                                   // zoom punch
   float tLight=0.;
   {vec2 p=(q-.5)*vec2(asp,1.);float cr=cos(uTRot),sr=sin(uTRot);p=mat2(cr,-sr,sr,cr)*p/max(uTZoom,.2);   // touch: pinch zoom and twist
-   for(int i=0;i<6;i++){float lf=uTL[i];if(lf<=0.)continue;vec2 c0=(uTF[i].xy-.5)*vec2(asp,1.),dp=p-c0;float fall=exp(-dot(dp,dp)*22.);
+   for(int i=0;i<6;i++){float lf=uTL[i];if(lf<=0.||uInkOn>.5)continue;vec2 c0=(uTF[i].xy-.5)*vec2(asp,1.),dp=p-c0;float fall=exp(-dot(dp,dp)*22.);
      p-=uTF[i].zw*vec2(asp,1.)*fall*lf*.05;                                   // the picture flows with the finger
      float a=uTS[i]*fall*lf;dp=p-c0;p=c0+mat2(cos(a),-sin(a),sin(a),cos(a))*dp;}  // and swirls round it
    for(int i=0;i<6;i++){vec4 R=uTR[i];if(R.w<=0.)continue;vec2 dp=p-(R.xy-.5)*vec2(asp,1.);float rr=length(dp);
@@ -1067,12 +1074,16 @@ void main(){
   float ring=0.;
   if(uShock<1.){float sr=uShock*1.15;ring=exp(-pow((r-sr)*15.,2.))*(1.-uShock);q-=normalize(d+1e-5)/vec2(asp,1.)*ring*.045;}  // shockwave
   if(uFold>.5){float a=atan(d.y,d.x),seg=6.2831853/uFold;a=mod(a+uTime*.3,seg);a=abs(a-seg*.5);q=.5+vec2(cos(a),sin(a))*r/vec2(asp,1.);}  // kaleidoscope fold
+  if(uInkOn>.5)q=1.-abs(1.-mod(abs(q),2.));                   // pushed past the edge: the picture folds back like a mirror
   vec2 dd=q-.5;
   float ca=(uFilm*(.0025+uPulse*.004)+uSnare*.006+uDrop*.02+uImp*.018+uHarsh*uTim*.012)*dot(dd,dd)*4.;
   vec3 c=vec3(texture(uT,q+dd*ca).r,texture(uT,q).g,texture(uT,q-dd*ca).b);
   {vec2 tx=1./vec2(textureSize(uT,0));vec3 a1=texture(uT,q+tx*vec2(-1.,-1.)).rgb,a2=texture(uT,q+tx*vec2(1.,-1.)).rgb,a3=texture(uT,q+tx*vec2(-1.,1.)).rgb,a4=texture(uT,q+tx*vec2(1.,1.)).rgb;
    vec3 lw=vec3(.299,.587,.114);float l1=dot(a1,lw),l2=dot(a2,lw),l3=dot(a3,lw),l4=dot(a4,lw),lc=dot(c,lw);float mx=max(max(max(l1,l2),max(l3,l4)),lc),mn=min(min(min(l1,l2),min(l3,l4)),lc);
    float edge=(mx-mn)/(mx+.08);c=mix(c,(a1+a2+a3+a4+c*2.)/6.,smoothstep(.25,.75,edge)*.6);}     // soften jagged edges, keep soft textures
+  if(uInkOn>.5&&INK.z>.002){c=mix(c,texture(uWet,uv).rgb,clamp(INK.z,0.,1.)*.978);   // wet paint carried by the flow
+    vec2 it=1./vec2(textureSize(uInk,0));float wx=texture(uInk,uv+vec2(it.x,0.)).z-texture(uInk,uv-vec2(it.x,0.)).z,wy=texture(uInk,uv+vec2(0.,it.y)).z-texture(uInk,uv-vec2(0.,it.y)).z;
+    c+=(c*.6+vec3(.05))*clamp(dot(vec2(wx,wy),vec2(-.55,.8))*1.6,0.,1.)*.5;}                 // and its wet edges catch the light
   c+=texture(uBloom,q).rgb*uGlow*(1.+uDrop*1.5+uImp);
   c+=(c*.8+vec3(.08,.09,.12))*tLight*.6;                       // ripples catch the light
   if(uTrans<1.){                                                // animated scene change
@@ -1127,7 +1138,7 @@ function glInit(){
   if(!GLOK)return;
   G.fmt=gl.getExtension('EXT_color_buffer_float')?{ifmt:gl.RGBA16F,type:gl.HALF_FLOAT}:{ifmt:gl.RGBA8,type:gl.UNSIGNED_BYTE};
   G.vao=gl.createVertexArray();gl.bindVertexArray(G.vao);
-  G.pre=glProg(FSQ_VS,FS_PRE);G.down=glProg(FSQ_VS,FS_DOWN);G.up=glProg(FSQ_VS,FS_UP);G.post=glProg(FSQ_VS,FS_POST);G.copy=glProg(FSQ_VS,FS_COPY);
+  G.pre=glProg(FSQ_VS,FS_PRE);G.down=glProg(FSQ_VS,FS_DOWN);G.up=glProg(FSQ_VS,FS_UP);G.post=glProg(FSQ_VS,FS_POST);G.copy=glProg(FSQ_VS,FS_COPY);flInit&&setTimeout(flInit,0);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
   G.specTex=glTex(1,1,false);G.waveTex=glTex(1,1,false);
   gl.bindTexture(gl.TEXTURE_2D,G.specTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.R8,160,1,0,gl.RED,gl.UNSIGNED_BYTE,G.specBuf);
@@ -1193,6 +1204,7 @@ function glUploadCanvas(c){
 // glow + finish, then show on screen
 function glPost(tex,threshold){
   gl.disable(gl.BLEND);
+  if(flActive())flStep(tex);
   const B=G.bloom;
   gl.useProgram(G.pre.p);gl.bindFramebuffer(gl.FRAMEBUFFER,B[0].f);gl.viewport(0,0,B[0].w,B[0].h);
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.uniform1i(G.pre.u.uT,0);
@@ -1216,7 +1228,7 @@ function glPost(tex,threshold){
   const fx=S.hitfx;
   gl.uniform2f(u.uOut,W,H);gl.uniform1f(u.uSnare,SCENES[S.scene].calm?0:RA.snare);gl.uniform1f(u.uDrop,SCENES[S.scene].calm?0:RA.drop);gl.uniform1f(u.uGlow,S.glow*0.28*(S.timbre&&live?0.8+0.45*TB.bright:1));gl.uniform1f(u.uPulse,SCENES[S.scene].calm?0:RA.pulse);gl.uniform1f(u.uTime,st.t);gl.uniform1f(u.uFilm,S.film?(SCENES[S.scene].calm?0.3:1):0);
   gl.uniform1f(u.uImp,fx?Math.min(1.5,A.impact*S.react*0.7):0);gl.uniform1f(u.uShock,fx?FX.shock:1);gl.uniform1f(u.uFold,fx&&FX.foldT>0?FX.fold:0);
-  tmUniforms(u);
+  tmUniforms(u);flBind(u);
   gl.uniform2f(u.uShake,fx?FX.shake[0]:0,fx?FX.shake[1]:0);gl.uniform1f(u.uTrans,FX.trans);gl.uniform1f(u.uTType,FX.ttype);gl.uniform1f(u.uFlash,S.gentle?0.3:1);gl.uniform1f(u.uDyn,dynStep());if(u.uOled)gl.uniform1f(u.uOled,S.oled?1:0);{const tm=S.timbre&&live&&!SCENES[S.scene].calm?1:0;gl.uniform1f(u.uTim,tm);gl.uniform1f(u.uWarm,TB.warm);gl.uniform1f(u.uBrt,TB.bright);gl.uniform1f(u.uHarsh,TB.harsh)}
   drawFSQ();
   // keep this frame's picture, so the next scene change can transform out of it
@@ -4949,44 +4961,91 @@ const DNA_COASTER={name:'DNA Coaster',kind:'gl',fs:FS_DNACOAST,rs0:0.45,rsMax:0.
 
 /* =====================================================================
    TOUCH MODE — play with the visuals by finger or mouse
-   Draw: paint light trails that bend the picture and play notes in the song's key (like a harp).
-   Tap: a ripple and a bell note.   Hold still: a Fibonacci bloom grows with a chord; let go to burst it.
+   The picture is wet ink: drag through it and it moves, swirls and keeps the shape (see WET INK).
+   Draw: light trails (and, with sound on, notes in the song's key, like a harp).
+   Tap: a ripple.   Hold still: dive into the picture there, and a Fibonacci bloom grows; let go to burst it.
    Flick: a shockwave.   Two fingers: pinch to zoom, twist to turn (it springs back).
    Three-finger tap: a new scene.   Mouse: drag to draw, wheel to zoom, Shift + drag to twist.
    It works in every scene. In Liquid Feedback your light is painted into the flow itself.
    ===================================================================== */
-const TM={on:false,sound:true,ptr:new Map(),rib:[],spk:[],rip:[],forces:[],zoom:1,zv:0,rot:0,rv:0,pinch:null,threeT:0,lastNote:0,pad:null,out:null,idleHint:0};
+const TM={on:false,sound:(()=>{try{return localStorage.getItem('fibwave.touchSound')==='1'}catch(e){return false}})(),ptr:new Map(),rib:[],spk:[],rip:[],forces:[],zoom:1,zv:0,rot:0,rv:0,pinch:null,threeT:0,lastNote:0,pad:null,out:null,idleHint:0};
 const TM_SCALE=()=>{const minor=live&&A.tonal>0.4?A.keyMinor:false;return minor?[0,3,5,7,10]:[0,2,4,7,9]};
 const tmRoot=()=>live&&A.tonal>0.4?A.keyRoot:0;
 function tmPos(e){const r=ov.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*ov.width,y:(e.clientY-r.top)/r.height*ov.height,
   u:(e.clientX-r.left)/r.width,v:1-(e.clientY-r.top)/r.height}}
-/* ---------- sound: soft bells in the key of the song, with an echo; the visuals hear them too ---------- */
+/* ---------- sound (optional, off at the start): a different instrument in each part of the screen ----------
+   Left to right: Marimba · Pluck · Bell · Glass · Air.  Low on the screen: low notes and a soft tone; high: high notes, brighter.
+   Near the edges: more echo. The four corners: a strummed chord.  All notes are in the key of the song.
+   The visuals hear the notes too.  Change it: TM_INSTR (the instruments), tmVoice (how each one is made). */
+const TM_INSTR=[{name:'Marimba',oct:-12},{name:'Pluck',oct:0},{name:'Bell',oct:0},{name:'Glass',oct:12},{name:'Air',oct:0}];
+const tmZone=u=>clamp(Math.floor(u*TM_INSTR.length),0,TM_INSTR.length-1);
 function tmAudio(){
   ensureCtx();if(TM.out)return;
-  const o=actx.createGain();o.gain.value=0.2;
-  const d=actx.createDelay(1);d.delayTime.value=0.29;const fb=actx.createGain();fb.gain.value=0.34;const lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2400;
-  const mix=actx.createGain();o.connect(mix);o.connect(d);d.connect(lp);lp.connect(fb);fb.connect(d);lp.connect(mix);
-  mix.connect(actx.destination);if(analyser)mix.connect(analyser);TM.out=o;
+  const mix=actx.createGain();mix.gain.value=0.9;
+  const dry=actx.createGain();dry.gain.value=0.22;dry.connect(mix);
+  const send=actx.createGain();send.gain.value=0.22;
+  const d=actx.createDelay(1.5),d2=actx.createDelay(1.5);d.delayTime.value=0.29;d2.delayTime.value=0.43;
+  const fb=actx.createGain();fb.gain.value=0.36;const lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;
+  const sp=actx.createChannelMerger?actx.createChannelMerger(2):null;
+  send.connect(d);send.connect(d2);d.connect(lp);d2.connect(lp);lp.connect(fb);fb.connect(d);
+  if(sp){lp.connect(sp,0,0);d2.connect(sp,0,1);sp.connect(mix)}else lp.connect(mix);   // a wide, soft echo
+  mix.connect(actx.destination);if(analyser)mix.connect(analyser);
+  TM.out=dry;TM.send=send;TM.mix=mix;
+  const nb=actx.createBuffer(1,actx.sampleRate*0.5,actx.sampleRate),nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;TM.noise=nb;
 }
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 function tmNoteFromY(v){const sc=TM_SCALE(),steps=Math.floor(clamp(v,0,0.999)*15),oct=Math.floor(steps/5);return 50+tmRoot()+oct*12+sc[steps%5]}
-function tmBell(m,pan,vel,len){
-  if(!TM.sound)return;tmAudio();const t=actx.currentTime,f=mtof(m),g=actx.createGain(),p=actx.createStereoPanner?actx.createStereoPanner():null;
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vel,t+0.006);g.gain.exponentialRampToValueAtTime(0.0008,t+len);
-  for(const [mul,amp,type] of [[1,1,'sine'],[2.001,0.28,'sine'],[3.01,0.12,'triangle']]){const o=actx.createOscillator(),a=actx.createGain();o.type=type;o.frequency.value=f*mul;a.gain.value=amp;o.connect(a).connect(g);o.start(t);o.stop(t+len+0.05)}
-  if(p){p.pan.value=clamp(pan,-1,1);g.connect(p).connect(TM.out)}else g.connect(TM.out);
+// one note: the instrument comes from x, the pitch and brightness from y, the echo from how near the edge it is
+function tmVoice(m,u,v,vel,len,when){
+  const z=tmZone(u),I=TM_INSTR[z],t=actx.currentTime+(when||0),f=mtof(m+I.oct);
+  const edge=clamp(Math.max(Math.abs(u-0.5),Math.abs(v-0.5))*2,0,1);
+  const out=actx.createGain(),lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900+v*v*9000;lp.Q.value=0.4;out.connect(lp);
+  const pan=actx.createStereoPanner?actx.createStereoPanner():null,dest=pan||lp;if(pan){pan.pan.value=clamp(u*2-1,-1,1)*0.85;lp.connect(pan)}
+  dest.connect(TM.out);const sg=actx.createGain();sg.gain.value=0.25+edge*1.1;dest.connect(sg);sg.connect(TM.send);
+  const part=(type,fr,amp,att,dec)=>{const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=fr;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(amp*vel,t+att);g.gain.exponentialRampToValueAtTime(0.0004,t+att+dec);o.connect(g);g.connect(out);o.start(t);o.stop(t+att+dec+0.05);return o};
+  if(z===0){part('sine',f,1.1,0.003,len*0.7);part('sine',f*4,0.32,0.002,0.13);part('sine',f*9.9,0.07,0.001,0.05)}            // marimba: warm wood
+  else if(z===1){const o=actx.createOscillator(),g=actx.createGain(),fl=actx.createBiquadFilter();o.type='sawtooth';o.frequency.value=f;   // pluck: a bright string that softens
+    fl.type='lowpass';fl.Q.value=3;fl.frequency.setValueAtTime(f*(5+v*9),t);fl.frequency.exponentialRampToValueAtTime(f*1.3,t+0.35);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vel*0.75,t+0.002);g.gain.exponentialRampToValueAtTime(0.0004,t+len*0.6);
+    o.connect(fl);fl.connect(g);g.connect(out);o.start(t);o.stop(t+len*0.6+0.05)}
+  else if(z===2){part('sine',f,1,0.006,len);part('sine',f*2.001,0.28,0.006,len*0.7);part('triangle',f*3.01,0.12,0.006,len*0.5);part('sine',f*4.2,0.05,0.004,len*0.3)}   // bell
+  else if(z===3){[[1,1,1.4],[2.756,0.45,0.9],[5.404,0.22,0.5],[8.933,0.1,0.3]].forEach(([k,a,d])=>part('sine',f*k,a*0.8,0.002,len*d));part('sine',f*1.004,0.5,0.002,len*1.3)}   // glass: a struck glass bar, with a slow shimmer
+  else{const o=part('triangle',f,0.9,0.09,len*1.1);part('sine',f*2,0.18,0.12,len*0.8);                                       // air: a breathy flute
+    const lfo=actx.createOscillator(),lg=actx.createGain();lfo.frequency.value=5.2;lg.gain.value=f*0.006;lfo.connect(lg);lg.connect(o.frequency);lfo.start(t);lfo.stop(t+len*1.2);
+    const n=actx.createBufferSource(),bp=actx.createBiquadFilter(),ng=actx.createGain();n.buffer=TM.noise;bp.type='bandpass';bp.frequency.value=f*2;bp.Q.value=5;
+    ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(vel*0.35,t+0.03);ng.gain.exponentialRampToValueAtTime(0.0004,t+0.3);n.connect(bp);bp.connect(ng);ng.connect(out);n.start(t);n.stop(t+0.35)}
 }
-function tmPadStart(m){
-  if(!TM.sound)return;tmAudio();const t=actx.currentTime,g=actx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.16,t+1.2);g.connect(TM.out);
-  const sc=TM_SCALE(),os=[0,sc[2],7,12].map(iv=>{const o=actx.createOscillator();o.type='triangle';o.frequency.value=mtof(m+iv);o.detune.value=(Math.random()-0.5)*8;o.connect(g);o.start(t);return o});
+function tmBell(m,u,v,vel,len){
+  if(!TM.sound)return;tmAudio();
+  const corner=Math.min(Math.hypot(u,v),Math.hypot(1-u,v),Math.hypot(u,1-v),Math.hypot(1-u,1-v))<0.17;
+  if(corner){const sc=TM_SCALE();[0,sc[2],7,12].forEach((iv,i)=>tmVoice(m+iv,u,v,vel*0.6,len*1.3,i*0.045))}   // a corner: a strummed chord
+  else tmVoice(m,u,v,vel,len);
+}
+// hold still: a pad chord; its sound also comes from where you hold
+function tmPadStart(m,u,v){
+  if(!TM.sound)return;tmAudio();u=u===undefined?0.5:u;v=v===undefined?0.5:v;
+  const z=tmZone(u),t=actx.currentTime,g=actx.createGain(),lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=500+v*v*5000;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.16,t+1.2);g.connect(lp);lp.connect(TM.out);
+  const sg=actx.createGain();sg.gain.value=0.6;lp.connect(sg);sg.connect(TM.send);
+  const type=['sine','sawtooth','triangle','sine','triangle'][z],sc=TM_SCALE();
+  const os=[0,sc[2],7,12].map(iv=>{const o=actx.createOscillator();o.type=type;o.frequency.value=mtof(m+TM_INSTR[z].oct+iv);o.detune.value=(Math.random()-0.5)*(z===3?16:8);o.connect(g);o.start(t);return o});
   TM.pad={g,os};
 }
 function tmPadStop(){if(!TM.pad)return;const t=actx.currentTime,P=TM.pad;TM.pad=null;P.g.gain.cancelScheduledValues(t);P.g.gain.setValueAtTime(P.g.gain.value,t);P.g.gain.exponentialRampToValueAtTime(0.0005,t+1.6);P.os.forEach(o=>o.stop(t+1.7))}
-function tmWhoosh(pan){
-  if(!TM.sound)return;tmAudio();const t=actx.currentTime,n=actx.createBufferSource(),b=actx.createBuffer(1,actx.sampleRate*0.6,actx.sampleRate),dd=b.getChannelData(0);
+// a flick: a whoosh, higher when it is high on the screen
+function tmWhoosh(u,v){
+  if(!TM.sound)return;tmAudio();v=v===undefined?0.5:v;const t=actx.currentTime,n=actx.createBufferSource(),b=actx.createBuffer(1,actx.sampleRate*0.6,actx.sampleRate),dd=b.getChannelData(0);
   for(let i=0;i<dd.length;i++)dd[i]=(Math.random()*2-1)*(1-i/dd.length);n.buffer=b;
-  const f=actx.createBiquadFilter();f.type='bandpass';f.Q.value=1.4;f.frequency.setValueAtTime(300,t);f.frequency.exponentialRampToValueAtTime(3200,t+0.45);
-  const g=actx.createGain();g.gain.value=0.5;n.connect(f).connect(g).connect(TM.out);n.start(t);
+  const f=actx.createBiquadFilter();f.type='bandpass';f.Q.value=1.4;f.frequency.setValueAtTime(180+v*600,t);f.frequency.exponentialRampToValueAtTime(1400+v*4200,t+0.45);
+  const g=actx.createGain();g.gain.value=0.5;const pan=actx.createStereoPanner?actx.createStereoPanner():null;
+  n.connect(f);f.connect(g);if(pan){pan.pan.value=clamp(u*2-1,-1,1);g.connect(pan);pan.connect(TM.out);pan.connect(TM.send)}else{g.connect(TM.out);g.connect(TM.send)}n.start(t);
+}
+function tmSound(on){
+  TM.sound=on;if(on)tmAudio();else tmPadStop();
+  try{localStorage.setItem('fibwave.touchSound',on?'1':'0')}catch(e){}
+  for(const id of ['tmSnd','bTouchSnd']){const b=document.getElementById(id);if(b){b.classList.toggle('on',on);b.textContent=on?'♪ Sound on':'♪ Sound off'}}
+  toast(on?'Touch sound on: each part of the screen plays a different instrument':'Touch sound off');
 }
 /* ---------- what the fingers do ---------- */
 function tmSpark(x,y,vx,vy,n,spread,size){for(let i=0;i<n;i++){if(TM.spk.length>900)TM.spk.shift();const a=Math.random()*TAU,s=Math.random()*spread;
@@ -4998,8 +5057,8 @@ function tmDown(e){
   TM.ptr.set(e.pointerId,p);TM.rib.push(p.rib={pts:p.pts,life:1,hue:p.hue,alive:true});
   if(TM.ptr.size===3)TM.threeT=now;
   if(TM.ptr.size>=2)tmPinchStart();
-  p.lastStep=Math.floor(clamp(P.v,0,0.999)*15);
-  tmBell(tmNoteFromY(P.v),P.u*2-1,0.32,1.6);tmRipple(P.u,P.v,0.6);tmSpark(P.x,P.y,0,0,14,2.2*DPR);
+  p.lastStep=Math.floor(clamp(P.v,0,0.999)*15);p.lastZone=tmZone(P.u);
+  tmBell(tmNoteFromY(P.v),P.u,P.v,0.32,1.6);FL.lastTouch=performance.now();tmRipple(P.u,P.v,0.6);tmSpark(P.x,P.y,0,0,14,2.2*DPR);
 }
 function tmMove(e){
   const p=TM.ptr.get(e.pointerId);if(!p)return;const P=tmPos(e),now=performance.now(),dt=Math.max(0.008,(now-p.lt)/1000);
@@ -5011,8 +5070,8 @@ function tmMove(e){
   const sp=Math.hypot(p.vx,p.vy);
   if(sp>60*DPR)tmSpark(P.x,P.y,p.vx*0.04,p.vy*0.04,Math.min(4,1+sp/(900*DPR)|0),0.8*DPR);
   // crossing a step of the scale plays the next note (a harp across the screen)
-  const step=Math.floor(clamp(P.v,0,0.999)*15);
-  if(step!==p.lastStep&&now-TM.lastNote>55){p.lastStep=step;TM.lastNote=now;tmBell(tmNoteFromY(P.v),P.u*2-1,clamp(0.12+sp/(5000*DPR),0.12,0.32),1.1)}
+  const step=Math.floor(clamp(P.v,0,0.999)*15),zn=tmZone(P.u);FL.lastTouch=now;
+  if((step!==p.lastStep||zn!==p.lastZone)&&now-TM.lastNote>55){p.lastStep=step;p.lastZone=zn;TM.lastNote=now;tmBell(tmNoteFromY(P.v),P.u,P.v,clamp(0.12+sp/(5000*DPR),0.12,0.32),1.1)}
 }
 function tmUp(e){
   const p=TM.ptr.get(e.pointerId);if(!p)return;TM.ptr.delete(e.pointerId);p.rib.alive=false;
@@ -5021,8 +5080,8 @@ function tmUp(e){
   if(TM.threeT&&TM.ptr.size===0&&now-TM.threeT<650){TM.threeT=0;goRandom(true);toast('New scene: '+SCENES[S.scene].name);return}
   if(p.bloom>0.15){                                      // release a bloom: it bursts
     tmPadStop();const n=Math.floor(60+p.bloom*160);tmSpark(p.x,p.y,0,0,n,7*DPR*(0.5+p.bloom),1.6);tmRipple(p.u,p.v,1.6);
-    tmBell(tmNoteFromY(p.v)+12,p.u*2-1,0.35,2.4);if(S.hitfx)transitionHit(0.8);
-  }else if(sp>1800*DPR&&now-p.t0<600){tmWhoosh(p.u*2-1);tmRipple(p.u,p.v,1.3);tmSpark(p.x,p.y,p.vx*0.05,p.vy*0.05,40,3*DPR,1.2);if(S.hitfx)transitionHit(0.6)}
+    tmBell(tmNoteFromY(p.v)+12,p.u,p.v,0.35,2.4);if(S.hitfx)transitionHit(0.8);
+  }else if(sp>1800*DPR&&now-p.t0<600){tmWhoosh(p.u,p.v);tmRipple(p.u,p.v,1.3);tmSpark(p.x,p.y,p.vx*0.05,p.vy*0.05,40,3*DPR,1.2);if(S.hitfx)transitionHit(0.6)}
   else tmPadStop();
   TM.forces.push({u:p.u,v:p.v,vu:p.vx/ov.width,vv:-p.vy/ov.height,life:1,sw:(p.id%2?1:-1)});
 }
@@ -5038,7 +5097,7 @@ function tmFrame(dt){
   for(const p of TM.ptr.values()){
     if(p.twist)continue;
     const moving=Math.hypot(p.vx,p.vy)>40*DPR;p.vx*=Math.pow(0.05,dt);p.vy*=Math.pow(0.05,dt);
-    if(!moving&&TM.ptr.size===1&&now-p.t0>350&&p.moved<30*DPR){if(p.bloom===0)tmPadStart(tmNoteFromY(p.v)-12);p.bloom=Math.min(1,p.bloom+dt*0.45)}
+    if(!moving&&TM.ptr.size===1&&now-p.t0>350&&p.moved<30*DPR){if(p.bloom===0)tmPadStart(tmNoteFromY(p.v)-12,p.u,p.v);p.bloom=Math.min(1,p.bloom+dt*0.45)}
   }
   for(const r of TM.rip)r.age+=dt*0.9;TM.rip=TM.rip.filter(r=>r.age<1);
   for(const f of TM.forces)f.life-=dt*1.3;TM.forces=TM.forces.filter(f=>f.life>0);
@@ -5054,11 +5113,10 @@ function tmForces(){
 }
 function tmUniforms(u){
   if(u.uTZoom){gl.uniform1f(u.uTZoom,TM.zoom);gl.uniform1f(u.uTRot,TM.rot)}
-  if(!u.uTF)return;
-  const F=new Float32Array(24),L=new Float32Array(6),SW=new Float32Array(6),R=new Float32Array(24);
-  tmForces().forEach((f,i)=>{F.set([f.u,f.v,f.vu,f.vv],i*4);L[i]=f.life;SW[i]=f.sw});
-  TM.rip.forEach((r,i)=>{if(i<6)R.set([r.u,r.v,r.age,r.str],i*4)});
-  gl.uniform4fv(u.uTF,F);if(u.uTL)gl.uniform1fv(u.uTL,L);if(u.uTS)gl.uniform1fv(u.uTS,SW);if(u.uTR)gl.uniform4fv(u.uTR,R);
+  if(u.uTF){const F=new Float32Array(24),L=new Float32Array(6),SW=new Float32Array(6);
+    tmForces().forEach((f,i)=>{F.set([f.u,f.v,f.vu,f.vv],i*4);L[i]=f.life;SW[i]=f.sw});
+    gl.uniform4fv(u.uTF,F);if(u.uTL)gl.uniform1fv(u.uTL,L);if(u.uTS)gl.uniform1fv(u.uTS,SW)}
+  if(u.uTR){const R=new Float32Array(24);TM.rip.forEach((r,i)=>{if(i<6)R.set([r.u,r.v,r.age,r.str],i*4)});gl.uniform4fv(u.uTR,R)}
 }
 /* ---------- drawing the light (on the top layer) ---------- */
 function tmDraw(){
@@ -5083,9 +5141,9 @@ function tmDraw(){
 function tmSet(on){
   TM.on=on;document.body.classList.toggle('touchmode',on);
   const b=document.getElementById('bTouch');if(b)b.classList.toggle('on',on);
-  if(on){tmAudio();setLocked(true);
-    toast(TOUCH?'Touch mode: draw with your finger · tap for notes · hold for a bloom · pinch and twist · three-finger tap for a new scene':
-      'Touch mode: drag to draw and play notes · hold still for a bloom · flick for a shockwave · scroll to zoom · Shift + drag to twist · M to leave');}
+  if(on){if(TM.sound)tmAudio();setLocked(true);
+    toast(TOUCH?'Touch mode: the picture is wet ink · drag through it to mold it · hold still to dive in · pinch and twist · three-finger tap for a new scene · ♪ for sound':
+      'Touch mode: the picture is wet ink · drag through it to mold it · hold still to dive in · flick for a shockwave · scroll to zoom · V sound · C clean · M to leave');}
   else{TM.ptr.clear();tmPadStop();toast('Touch mode off')}
   try{localStorage.setItem('fibwave.touch',on?'1':'0')}catch(e){}
 }
@@ -5098,6 +5156,138 @@ addEventListener('pointerup',e=>{if(TM.ptr.has(e.pointerId)){e.stopPropagation()
 addEventListener('pointercancel',e=>{if(TM.ptr.has(e.pointerId))tmUp(e)},true);
 addEventListener('wheel',e=>{if(!TM.on||(e.target.closest&&e.target.closest(TM_UI)))return;e.stopPropagation();TM.zv-=e.deltaY*0.012},{capture:true,passive:true});
 addEventListener('contextmenu',e=>{if(TM.on&&!(e.target.closest&&e.target.closest(TM_UI)))e.preventDefault()});
+
+/* =====================================================================
+   WET INK — in Touch mode the picture itself is a sheet of wet ink (GPU)
+   A small fluid simulation runs under every scene. Your finger pushes the fluid; the fluid carries
+   a "where to look" map, so the picture is dragged, swirled and molded along your path and keeps
+   that shape, then slowly settles back. Fast strokes make the picture wet: its colours smear and
+   flow like paint. Hold still to dive into the picture at that point (it opens up round your finger).
+   Steps each frame: curl → velocity (move, stir, swirl) → divergence → pressure (20 passes) →
+   remove divergence → move the ink map → smear the wet colour.  Stable-fluids method (Jos Stam, 1999).
+   Change it: FL.relax (how fast the shape settles back), FL.dry (how fast wet paint dries),
+   FL.vort (how curly the flow is), FL.visc (how thick the ink is).
+   ===================================================================== */
+const FL={ok:false,relax:0.14,dry:0.55,vort:24,visc:0.42,iters:20,lastTouch:-1e9,V:null};
+const FL_HEAD=`#version 300 es
+precision highp float;uniform vec2 uTx;out vec4 o;
+#define UV (gl_FragCoord.xy*uTx)
+float segD(vec2 p,vec2 a,vec2 b){vec2 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/max(dot(ba,ba),1e-9),0.,1.);return length(pa-ba*h);}
+`;
+const FS_FL_CURL=FL_HEAD+`uniform sampler2D uV;void main(){vec2 uv=UV;
+  float L=texture(uV,uv-vec2(uTx.x,0.)).y,R=texture(uV,uv+vec2(uTx.x,0.)).y,B=texture(uV,uv-vec2(0.,uTx.y)).x,T=texture(uV,uv+vec2(0.,uTx.y)).x;
+  o=vec4(.5*((R-L)-(T-B)),0.,0.,1.);}`;
+// move the fluid along itself, keep the swirls alive, and let the fingers push and stir it
+const FS_FL_VEL=FL_HEAD+`uniform sampler2D uV,uC;uniform float uDt,uDis,uVort,uAsp;uniform int uN;uniform vec4 uF[8],uFP[8];
+void main(){vec2 uv=UV;
+  vec2 v=texture(uV,uv-uDt*texture(uV,uv).xy*uTx).xy;
+  float L=abs(texture(uC,uv-vec2(uTx.x,0.)).x),R=abs(texture(uC,uv+vec2(uTx.x,0.)).x),B=abs(texture(uC,uv-vec2(0.,uTx.y)).x),T=abs(texture(uC,uv+vec2(0.,uTx.y)).x),C=texture(uC,uv).x;
+  vec2 f=vec2(T-B,R-L);f=f/(length(f)+1e-5)*uVort*C*vec2(1.,-1.);v+=f*uDt;      // vorticity: small swirls stay alive
+  v*=uDis;                                                                          // thick ink slows down
+  vec2 asp=vec2(uAsp,1.);
+  for(int i=0;i<8;i++){if(i>=uN)break;
+    vec2 p=uv*asp,a=uFP[i].xy*asp,b=uF[i].xy*asp;float d=segD(p,a,b);
+    float g=exp(-d*d/.0026);v+=(uF[i].zw-v)*g*.8;                                   // the ink along your path moves with you
+    vec2 dp=p-b;float gh=exp(-dot(dp,dp)/.014);v+=vec2(-dp.y,dp.x)/(length(dp)+.03)*uFP[i].w*gh*uDt*70.;}  // a held finger stirs slowly
+  float m=length(v);if(m>900.)v*=900./m;
+  o=vec4(v,0.,1.);}`;
+const FS_FL_DIV=FL_HEAD+`uniform sampler2D uV;void main(){vec2 uv=UV;vec2 C=texture(uV,uv).xy;
+  float L=texture(uV,uv-vec2(uTx.x,0.)).x,R=texture(uV,uv+vec2(uTx.x,0.)).x,B=texture(uV,uv-vec2(0.,uTx.y)).y,T=texture(uV,uv+vec2(0.,uTx.y)).y;
+  if(uv.x-uTx.x<0.)L=-C.x;if(uv.x+uTx.x>1.)R=-C.x;if(uv.y-uTx.y<0.)B=-C.y;if(uv.y+uTx.y>1.)T=-C.y;   // the screen edges are walls
+  o=vec4(.5*(R-L+T-B),0.,0.,1.);}`;
+const FS_FL_PRS=FL_HEAD+`uniform sampler2D uP,uD;void main(){vec2 uv=UV;
+  float L=texture(uP,uv-vec2(uTx.x,0.)).x,R=texture(uP,uv+vec2(uTx.x,0.)).x,B=texture(uP,uv-vec2(0.,uTx.y)).x,T=texture(uP,uv+vec2(0.,uTx.y)).x;
+  o=vec4((L+R+B+T-texture(uD,uv).x)*.25,0.,0.,1.);}`;
+const FS_FL_GRAD=FL_HEAD+`uniform sampler2D uP,uV;void main(){vec2 uv=UV;
+  float L=texture(uP,uv-vec2(uTx.x,0.)).x,R=texture(uP,uv+vec2(uTx.x,0.)).x,B=texture(uP,uv-vec2(0.,uTx.y)).x,T=texture(uP,uv+vec2(0.,uTx.y)).x;
+  o=vec4(texture(uV,uv).xy-.5*vec2(R-L,T-B),0.,1.);}`;
+const FS_FL_SCALE=FL_HEAD+`uniform sampler2D uT;uniform float uK;void main(){o=texture(uT,UV)*uK;}`;
+// the ink map: xy = where this point of the screen looks in the picture (an offset), z = how wet it is
+const FS_FL_INK=FL_HEAD+`uniform sampler2D uI,uV;uniform float uDt,uRelax,uDry,uAsp;uniform int uN;uniform vec4 uF[8],uFP[8];
+void main(){vec2 uv=UV;vec2 v=texture(uV,uv).xy*uTx;
+  vec4 I=texture(uI,uv-uDt*v);
+  vec2 O=(I.xy-uDt*v)*uRelax;float w=I.z*uDry;                                     // carried by the flow; slowly settles and dries
+  vec2 asp=vec2(uAsp,1.);
+  for(int i=0;i<8;i++){if(i>=uN)break;
+    vec2 p=uv*asp,a=uFP[i].xy*asp,b=uF[i].xy*asp;float d=segD(p,a,b),sp=length(uF[i].zw*uTx);
+    w=max(w,exp(-d*d/.0045)*clamp(sp*.8-.05,0.,1.));                               // a moving finger wets the picture
+    vec2 dp=uv-uF[i].xy;float gh=exp(-dot(dp*asp,dp*asp)/.03);
+    O+=(-dp*.82-O)*clamp(gh*uFP[i].z*uDt*1.1,0.,1.);}                               // holding still: dive into the picture there
+  float m=length(O);if(m>.6)O*=.6/m;
+  o=vec4(O,clamp(w,0.,1.),1.);}`;
+// wet colour: where the ink is wet, the picture's colour is carried along by the flow, like paint
+const FS_FL_WET=`#version 300 es
+precision highp float;uniform sampler2D uS,uW,uI,uV;uniform vec2 uOut,uTx;uniform float uDt;out vec4 o;
+void main(){vec2 uv=gl_FragCoord.xy/uOut;vec4 I=texture(uI,uv);
+  vec2 q=1.-abs(1.-mod(abs(uv+I.xy),2.));vec3 s=texture(uS,q).rgb;
+  vec3 p=texture(uW,uv-uDt*texture(uV,uv).xy*uTx).rgb;
+  o=vec4(mix(s,p,clamp(I.z,0.,1.)*.978),1.);}`;
+function flInit(){
+  if(!GLOK||!G.fmt||G.fmt.ifmt!==gl.RGBA16F)return;            // needs floating-point render targets; without them Touch mode uses the simpler bend
+  try{FL.P={curl:glProg(FSQ_VS,FS_FL_CURL),vel:glProg(FSQ_VS,FS_FL_VEL),div:glProg(FSQ_VS,FS_FL_DIV),prs:glProg(FSQ_VS,FS_FL_PRS),grad:glProg(FSQ_VS,FS_FL_GRAD),
+    scale:glProg(FSQ_VS,FS_FL_SCALE),ink:glProg(FSQ_VS,FS_FL_INK),wet:glProg(FSQ_VS,FS_FL_WET)};FL.ok=true}catch(e){console.warn('Wet ink off:',e);FL.ok=false}
+}
+function flSize(){
+  const h=Math.round(clamp(H/7,72,190)),w=Math.max(16,Math.round(h*W/H)),ww=Math.max(16,Math.round(W/2)),wh=Math.max(16,Math.round(H/2));
+  if(FL.w===w&&FL.h===h&&FL.ww===ww&&FL.wh===wh)return;
+  for(const k of ['v0','v1','p0','p1','div','curl','i0','i1','w0','w1'])glFree(FL[k]);
+  FL.w=w;FL.h=h;FL.ww=ww;FL.wh=wh;
+  FL.v0=glTarget(w,h,true);FL.v1=glTarget(w,h,true);FL.p0=glTarget(w,h,true);FL.p1=glTarget(w,h,true);FL.div=glTarget(w,h,true);FL.curl=glTarget(w,h,true);
+  FL.i0=glTarget(w,h,true);FL.i1=glTarget(w,h,true);FL.w0=glTarget(ww,wh,true);FL.w1=glTarget(ww,wh,true);
+}
+// is the ink in use? (Touch mode on, or a touch in the last 25 s while it settles back)
+const flActive=()=>FL.ok&&(TM.on||performance.now()-FL.lastTouch<25000);
+function flPass(P,T,tex,set){
+  gl.bindFramebuffer(gl.FRAMEBUFFER,T.f);gl.viewport(0,0,T.w,T.h);gl.useProgram(P.p);
+  let unit=0;for(const k in tex){gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,tex[k]);gl.uniform1i(P.u[k],unit);unit++}
+  if(P.u.uTx)gl.uniform2f(P.u.uTx,1/FL.w,1/FL.h);
+  if(set)set(P.u);drawFSQ();gl.activeTexture(gl.TEXTURE0);
+}
+// the fingers, as the fluid sees them: where they are now, where they were last frame, how fast, holding or not
+function flFingers(dt){
+  const F=new Float32Array(32),FP=new Float32Array(32);let n=0;
+  for(const p of TM.ptr.values()){
+    if(p.twist||n>=8)continue;
+    if(p.su===undefined){p.su=p.u;p.sv=p.v}
+    const vu=clamp((p.u-p.su)/dt,-5,5),vv=clamp((p.v-p.sv)/dt,-5,5);
+    const hold=p.bloom>0?Math.min(1,0.35+p.bloom*1.3):0;
+    F.set([p.u,p.v,vu*FL.w,vv*FL.h],n*4);FP.set([p.su,p.sv,hold,(p.id%2?1:-1)*p.bloom],n*4);
+    p.su=p.u;p.sv=p.v;n++;
+  }
+  return {F,FP,n};
+}
+function flStep(sceneTex){
+  flSize();
+  const dt=Math.min(1/30,Math.max(1/240,st.dtReal||1/60)),P=FL.P,asp=W/H,fg=flFingers(dt);
+  const fingers=u=>{gl.uniform1i(u.uN,fg.n);gl.uniform4fv(u.uF,fg.F);gl.uniform4fv(u.uFP,fg.FP)};
+  let t;
+  flPass(P.curl,FL.curl,{uV:FL.v0.t});
+  flPass(P.vel,FL.v1,{uV:FL.v0.t,uC:FL.curl.t},u=>{gl.uniform1f(u.uDt,dt);gl.uniform1f(u.uDis,Math.pow(FL.visc,dt));gl.uniform1f(u.uVort,FL.vort);gl.uniform1f(u.uAsp,asp);fingers(u)});
+  t=FL.v0;FL.v0=FL.v1;FL.v1=t;
+  flPass(P.div,FL.div,{uV:FL.v0.t});
+  flPass(P.scale,FL.p1,{uT:FL.p0.t},u=>gl.uniform1f(u.uK,0.8));t=FL.p0;FL.p0=FL.p1;FL.p1=t;
+  for(let i=0;i<FL.iters;i++){flPass(P.prs,FL.p1,{uP:FL.p0.t,uD:FL.div.t});t=FL.p0;FL.p0=FL.p1;FL.p1=t}
+  flPass(P.grad,FL.v1,{uP:FL.p0.t,uV:FL.v0.t});t=FL.v0;FL.v0=FL.v1;FL.v1=t;
+  const relax=Math.exp(-dt*(TM.on?FL.relax:0.35)),dry=Math.exp(-dt*FL.dry);
+  flPass(P.ink,FL.i1,{uI:FL.i0.t,uV:FL.v0.t},u=>{gl.uniform1f(u.uDt,dt);gl.uniform1f(u.uRelax,relax);gl.uniform1f(u.uDry,dry);gl.uniform1f(u.uAsp,asp);fingers(u)});
+  t=FL.i0;FL.i0=FL.i1;FL.i1=t;
+  // wet colour (half screen size)
+  gl.bindFramebuffer(gl.FRAMEBUFFER,FL.w1.f);gl.viewport(0,0,FL.ww,FL.wh);const Q=P.wet;gl.useProgram(Q.p);
+  [[sceneTex,'uS'],[FL.w0.t,'uW'],[FL.i0.t,'uI'],[FL.v0.t,'uV']].forEach(([tx,k],i)=>{gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,tx);gl.uniform1i(Q.u[k],i)});
+  gl.uniform2f(Q.u.uOut,FL.ww,FL.wh);gl.uniform2f(Q.u.uTx,1/FL.w,1/FL.h);gl.uniform1f(Q.u.uDt,dt);drawFSQ();gl.activeTexture(gl.TEXTURE0);
+  t=FL.w0;FL.w0=FL.w1;FL.w1=t;
+}
+// the post shader: bind the ink map and the wet colour (units 3 and 4)
+function flBind(u){
+  const on=flActive()&&FL.i0;
+  if(u.uInkOn!==undefined&&u.uInkOn!==null)gl.uniform1f(u.uInkOn,on?1:0);
+  if(!on)return;
+  gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,FL.i0.t);gl.uniform1i(u.uInk,3);
+  gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,FL.w0.t);gl.uniform1i(u.uWet,4);
+  gl.activeTexture(gl.TEXTURE0);
+}
+// start clean: the picture goes back to normal at once
+function flClear(){if(!FL.ok||!FL.v0)return;for(const k of ['v0','v1','p0','p1','i0','i1']){gl.bindFramebuffer(gl.FRAMEBUFFER,FL[k].f);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT)}gl.bindFramebuffer(gl.FRAMEBUFFER,null)}
 
 const SCENES=[
   {name:'Sunflower',draw:sunflower,fb:{zoom:1.006,rot:0.002}},
@@ -6205,6 +6395,9 @@ function setLocked(on){
 }
 document.getElementById('bHide').onclick=()=>setLocked(true);
 document.getElementById('bTouch').onclick=()=>tmSet(!TM.on);
+document.getElementById('bTouchSnd').onclick=document.getElementById('tmSnd').onclick=()=>tmSound(!TM.sound);
+document.getElementById('tmExit').onclick=()=>tmSet(false);document.getElementById('tmClear').onclick=()=>{flClear();toast('Clean picture')};
+for(const id of ['tmSnd','bTouchSnd']){const b=document.getElementById(id);b.classList.toggle('on',TM.sound);b.textContent=TM.sound?'♪ Sound on':'♪ Sound off'}
 document.getElementById('srcTouch').onclick=()=>{ensureCtx();if(!live)srcLabel='TOUCH & PLAY';hideStart();tmSet(true)};
 document.getElementById('showUi').onclick=()=>setLocked(false);
 addEventListener('dblclick',e=>{if(TM.on)return;if(e.target.closest&&e.target.closest('#hud,.panel,#start,#toast,#riffs'))return;setLocked(!uiLocked)});
@@ -6223,6 +6416,7 @@ addEventListener('keydown',e=>{
   if(/^[0-9]$/.test(k)){const i=k==='0'?9:+k-1;if(i<SCENES.length)setScene(i)}
   else if(k==='r'){randomNow()}
   else if(k==='m'){tmSet(!TM.on)}
+  else if(k==='v'){tmSound(!TM.sound)}
   else if(k==='['){if(HAS_PRESETS(sceneKind()))presetNext(-1);else setScene(nextScene(-1))}
   else if(k===']'){if(HAS_PRESETS(sceneKind()))presetNext(1);else setScene(nextScene(1))}
   else if(k==='k'){S.keyColor=!S.keyColor;document.getElementById('keycol').checked=S.keyColor;toast(S.keyColor?'Key colours on':'Key colours off')}
@@ -6244,7 +6438,7 @@ addEventListener('keydown',e=>{
   else if(k==='q'){POP.w&&POP.pip?popIn():pipOut()}
   else if(k==='y'){const o=['off','slow','music','hits'],sp=document.getElementById('spinSel');sp.value=o[(o.indexOf(S.spin)+1)%4];sp.dispatchEvent(new Event('change'))}
   else if(k==='t'){tvMode();return}
-  else if(k==='c'){castEl.hidden=!castEl.hidden}
+  else if(k==='c'){if(TM.on){flClear();toast('Clean picture')}else castEl.hidden=!castEl.hidden}
   else if(k==='h'){setLocked(!uiLocked);return}
   else if(k==='escape'){if(!lightsEl.hidden)lightsEl.hidden=true;else if(!castEl.hidden)castEl.hidden=true;else if(!screensEl.hidden)screensEl.hidden=true;else if(!start.hidden&&live)hideStart()}
   else if(k==='n'&&playlist.length&&mediaEl){track=(track+1)%playlist.length;playTrack()}
