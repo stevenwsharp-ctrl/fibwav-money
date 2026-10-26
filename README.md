@@ -88,12 +88,12 @@ About **90 scenes**, plus **36 Liquid Feedback presets** with an **Endless Mix**
 
 Play with the visuals by finger or mouse, with or without music. Click **✋ Touch & play** on the start card, or **✋ Touch** in the controls, or press **M**.
 
-In Touch mode, the picture is **wet ink**. A small fluid simulation runs under every scene. When you move through the picture, it moves with you: it swirls, curls and keeps the shape you gave it. Then it slowly settles back.
+In Touch mode, the picture is **wet ink** that protects its own shape. A small fluid simulation runs under every scene. The picture pushes back against you like an elastic jelly: slow or small touches only ripple it, and a fast or steady push is necessary to bend and swirl it. The longer you keep pushing, the stronger your hand gets. When you let go, the picture springs back to its original form in 1–2 seconds, so you always see the beauty of the scene.
 
 | Action | What happens |
 |---|---|
-| **Draw** (drag a finger or the mouse) | The picture is pushed and molded along your path. Fast strokes make it wet: its colours smear and flow like paint, and the wet edges catch the light. |
-| **Hold still** | You dive into the picture at that point: it opens up round your finger and slowly turns. A Fibonacci bloom grows. Let go to make it burst. |
+| **Draw** (drag a finger or the mouse) | The picture resists, then bends and swirls along your path when you push hard enough. Fast strokes make it wet for a moment: its colours smear like paint. |
+| **Hold still** | You dive a little into the picture at that point and it slowly turns. A Fibonacci bloom grows. Let go to make it burst. |
 | **Tap** | A ripple and sparks. |
 | **Flick** (a fast swipe) | A shockwave. |
 | **Two fingers** | Pinch to zoom, twist to turn. Let go and it springs back. |
@@ -124,7 +124,7 @@ All notes are in the key of the song. Without music, the visuals react to the no
 
 In **Liquid Feedback**, your light is also painted into the flow itself.
 
-To change how the ink feels, ask your AI to change `FL.relax` (how fast the shape settles back), `FL.dry` (how fast wet paint dries), `FL.vort` (how curly the flow is) or `FL.visc` (how thick the ink is). To change the instruments, ask it to change `TM_INSTR` and `tmVoice`.
+To change how the ink feels, ask your AI to change `FL.relax` (how fast the shape goes back), `FL.spring` (how hard the picture pushes back), `FL.dry` (how fast wet paint dries), `FL.vort` (how curly the flow is) or `FL.visc` (how thick the ink is). To change the instruments, ask it to change `TM_INSTR` and `tmVoice`.
 
 ## How to play music into Fibwave
 

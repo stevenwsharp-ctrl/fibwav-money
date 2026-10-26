@@ -1082,7 +1082,7 @@ void main(){
   {vec2 tx=1./vec2(textureSize(uT,0));vec3 a1=texture(uT,q+tx*vec2(-1.,-1.)).rgb,a2=texture(uT,q+tx*vec2(1.,-1.)).rgb,a3=texture(uT,q+tx*vec2(-1.,1.)).rgb,a4=texture(uT,q+tx*vec2(1.,1.)).rgb;
    vec3 lw=vec3(.299,.587,.114);float l1=dot(a1,lw),l2=dot(a2,lw),l3=dot(a3,lw),l4=dot(a4,lw),lc=dot(c,lw);float mx=max(max(max(l1,l2),max(l3,l4)),lc),mn=min(min(min(l1,l2),min(l3,l4)),lc);
    float edge=(mx-mn)/(mx+.08);c=mix(c,(a1+a2+a3+a4+c*2.)/6.,smoothstep(.25,.75,edge)*.6);}     // soften jagged edges, keep soft textures
-  if(uInkOn>.5&&INK.z>.002){c=mix(c,texture(uWet,uv).rgb,clamp(INK.z*2.,0.,1.));   // wet paint carried by the flow
+  if(uInkOn>.5&&INK.z>.002){c=mix(c,texture(uWet,uv).rgb,clamp(INK.z*1.4,0.,1.));   // wet paint carried by the flow
     vec2 it=1./vec2(textureSize(uInk,0));float wx=texture(uInk,uv+vec2(it.x,0.)).z-texture(uInk,uv-vec2(it.x,0.)).z,wy=texture(uInk,uv+vec2(0.,it.y)).z-texture(uInk,uv-vec2(0.,it.y)).z;
     c+=(c*.6+vec3(.05))*clamp(dot(vec2(wx,wy),vec2(-.55,.8))*1.6,0.,1.)*.5;}                 // and its wet edges catch the light
   c+=texture(uBloom,q).rgb*uGlow*(1.+uDrop*1.5+uImp);
@@ -5170,15 +5170,17 @@ addEventListener('contextmenu',e=>{if(TM.on&&!(e.target.closest&&e.target.closes
 /* =====================================================================
    WET INK — in Touch mode the picture itself is a sheet of wet ink (GPU)
    A small fluid simulation runs under every scene. Your finger pushes the fluid; the fluid carries
-   a "where to look" map, so the picture is dragged, swirled and molded along your path and keeps
-   that shape, then slowly settles back. Fast strokes make the picture wet: its colours smear and
-   flow like paint. Hold still to dive into the picture at that point (it opens up round your finger).
+   a "where to look" map, so the picture is dragged and swirled along your path. The picture protects
+   its own shape: it pushes back like an elastic jelly (a spring force), so slow or small touches only
+   ripple it, and a fast or steady push is needed to bend it. When you let go, it springs back home in
+   1–2 s. Fast strokes make it a little wet (colours smear like paint) for a moment. Hold still to dive
+   in a little at that point.
    Steps each frame: curl → velocity (move, stir, swirl) → divergence → pressure (20 passes) →
    remove divergence → move the ink map → smear the wet colour.  Stable-fluids method (Jos Stam, 1999).
-   Change it: FL.relax (how fast the shape settles back), FL.dry (how fast wet paint dries),
+   Change it: FL.relax (how fast the shape goes back), FL.spring (how hard it pushes back), FL.dry (how fast wet paint dries),
    FL.vort (how curly the flow is), FL.visc (how thick the ink is).
    ===================================================================== */
-const FL={ok:false,relax:0.14,dry:0.55,vort:24,visc:0.42,iters:20,lastTouch:-1e9,V:null};
+const FL={ok:false,relax:1.1,spring:28,dry:2.2,vort:22,visc:0.42,iters:20,lastTouch:-1e9,V:null};
 const FL_HEAD=`#version 300 es
 precision highp float;uniform vec2 uTx;out vec4 o;
 #define UV (gl_FragCoord.xy*uTx)
@@ -5188,16 +5190,17 @@ const FS_FL_CURL=FL_HEAD+`uniform sampler2D uV;void main(){vec2 uv=UV;
   float L=texture(uV,uv-vec2(uTx.x,0.)).y,R=texture(uV,uv+vec2(uTx.x,0.)).y,B=texture(uV,uv-vec2(0.,uTx.y)).x,T=texture(uV,uv+vec2(0.,uTx.y)).x;
   o=vec4(.5*((R-L)-(T-B)),0.,0.,1.);}`;
 // move the fluid along itself, keep the swirls alive, and let the fingers push and stir it
-const FS_FL_VEL=FL_HEAD+`uniform sampler2D uV,uC;uniform float uDt,uDis,uVort,uAsp;uniform int uN;uniform vec4 uF[8],uFP[8];
+const FS_FL_VEL=FL_HEAD+`uniform sampler2D uV,uC,uI;uniform float uDt,uDis,uVort,uAsp,uK;uniform int uN;uniform vec4 uF[8],uFP[8];uniform float uFS[8];
 void main(){vec2 uv=UV;
   vec2 v=texture(uV,uv-uDt*texture(uV,uv).xy*uTx).xy;
   float L=abs(texture(uC,uv-vec2(uTx.x,0.)).x),R=abs(texture(uC,uv+vec2(uTx.x,0.)).x),B=abs(texture(uC,uv-vec2(0.,uTx.y)).x),T=abs(texture(uC,uv+vec2(0.,uTx.y)).x),C=texture(uC,uv).x;
   vec2 f=vec2(T-B,R-L);f=f/(length(f)+1e-5)*uVort*C*vec2(1.,-1.);v+=f*uDt;      // vorticity: small swirls stay alive
+  v+=texture(uI,uv).xy/uTx*uK*uDt;                                                 // the picture pushes back toward its own shape (a spring)
   v*=uDis;                                                                          // thick ink slows down
   vec2 asp=vec2(uAsp,1.);
   for(int i=0;i<8;i++){if(i>=uN)break;
     vec2 p=uv*asp,a=uFP[i].xy*asp,b=uF[i].xy*asp;float d=segD(p,a,b);
-    float g=exp(-d*d/.007);v+=(uF[i].zw-v)*g*.4;                                    // the ink along your path is stirred along with you
+    float g=exp(-d*d/.007);v+=(uF[i].zw-v)*g*.45*uFS[i];                                    // the ink along your path is stirred along with you
     vec2 dp=p-b;float gh=exp(-dot(dp,dp)/.014);v+=vec2(-dp.y,dp.x)/(length(dp)+.03)*uFP[i].w*gh*uDt*70.;}  // a held finger stirs slowly
   float m=length(v);if(m>900.)v*=900./m;
   o=vec4(v,0.,1.);}`;
@@ -5213,17 +5216,17 @@ const FS_FL_GRAD=FL_HEAD+`uniform sampler2D uP,uV;void main(){vec2 uv=UV;
   o=vec4(texture(uV,uv).xy-.5*vec2(R-L,T-B),0.,1.);}`;
 const FS_FL_SCALE=FL_HEAD+`uniform sampler2D uT;uniform float uK;void main(){o=texture(uT,UV)*uK;}`;
 // the ink map: xy = where this point of the screen looks in the picture (an offset), z = how wet it is
-const FS_FL_INK=FL_HEAD+`uniform sampler2D uI,uV;uniform float uDt,uRelax,uDry,uAsp;uniform int uN;uniform vec4 uF[8],uFP[8];
+const FS_FL_INK=FL_HEAD+`uniform sampler2D uI,uV;uniform float uDt,uRelax,uDry,uAsp;uniform int uN;uniform vec4 uF[8],uFP[8];uniform float uFS[8];
 void main(){vec2 uv=UV;vec2 v=texture(uV,uv).xy*uTx;
   vec4 I=texture(uI,uv-uDt*v);
   vec2 O=(I.xy-uDt*v)*uRelax;float w=I.z*uDry;                                     // carried by the flow; slowly settles and dries
   vec2 asp=vec2(uAsp,1.);
   for(int i=0;i<8;i++){if(i>=uN)break;
     vec2 p=uv*asp,a=uFP[i].xy*asp,b=uF[i].xy*asp;float d=segD(p,a,b),sp=length(uF[i].zw*uTx);
-    w=max(w,exp(-d*d/.0045)*clamp(sp*.6-.15,0.,1.)*.85);                          // a fast finger wets the picture
+    w=max(w,exp(-d*d/.0035)*clamp(sp*.6-.2,0.,1.)*.6*uFS[i]);                          // a fast finger wets the picture
     vec2 dp=uv-uF[i].xy;float gh=exp(-dot(dp*asp,dp*asp)/.03);
-    O+=(-dp*.6-O)*clamp(gh*uFP[i].z*uDt*1.1,0.,1.);}                                // holding still: dive into the picture there
-  float m=length(O);if(m>.45)O*=.45/m;
+    O+=(-dp*.35-O)*clamp(gh*uFP[i].z*uDt*1.6,0.,1.);}                                // holding still: dive into the picture there
+  float m=length(O);if(m>.28)O*=.28/m;
   o=vec4(O,clamp(w,0.,1.),1.);}`;
 // wet colour: where the ink is wet, the picture's colour is carried along by the flow, like paint
 const FS_FL_WET=`#version 300 es
@@ -5256,30 +5259,33 @@ function flPass(P,T,tex,set){
 }
 // the fingers, as the fluid sees them: where they are now, where they were last frame, how fast, holding or not
 function flFingers(dt){
-  const F=new Float32Array(32),FP=new Float32Array(32);let n=0;
+  const F=new Float32Array(32),FP=new Float32Array(32),FS=new Float32Array(8);let n=0;
   for(const p of TM.ptr.values()){
     if(p.twist||n>=8)continue;
     if(p.su===undefined){p.su=p.u;p.sv=p.v}
     const vu=clamp((p.u-p.su)/dt,-5,5),vv=clamp((p.v-p.sv)/dt,-5,5);
     const hold=p.bloom>0?Math.min(1,0.35+p.bloom*1.3):0;
     F.set([p.u,p.v,vu*FL.w,vv*FL.h],n*4);FP.set([p.su,p.sv,hold,(p.id%2?1:-1)*p.bloom],n*4);
+    const spd=Math.hypot(vu*W/H,vv);                                       // how fast, in screen heights per second
+    p.push=clamp((p.push||0)+dt*(spd>0.25?1.4:-2.5),0,1);                    // keep pushing and your hand gets stronger
+    const sm=clamp((spd-0.1)/1.1,0,1);FS[n]=clamp(0.12+0.5*sm*sm*(3-2*sm)+0.45*p.push,0,1);   // slow, small touches: the picture resists
     p.su=p.u;p.sv=p.v;n++;
   }
-  return {F,FP,n};
+  return {F,FP,FS,n};
 }
 function flStep(sceneTex){
   flSize();
   const dt=Math.min(1/30,Math.max(1/240,st.dtReal||1/60)),P=FL.P,asp=W/H,fg=flFingers(dt);
-  const fingers=u=>{gl.uniform1i(u.uN,fg.n);gl.uniform4fv(u.uF,fg.F);gl.uniform4fv(u.uFP,fg.FP)};
+  const fingers=u=>{gl.uniform1i(u.uN,fg.n);gl.uniform4fv(u.uF,fg.F);gl.uniform4fv(u.uFP,fg.FP);if(u.uFS)gl.uniform1fv(u.uFS,fg.FS)};
   let t;
   flPass(P.curl,FL.curl,{uV:FL.v0.t});
-  flPass(P.vel,FL.v1,{uV:FL.v0.t,uC:FL.curl.t},u=>{gl.uniform1f(u.uDt,dt);gl.uniform1f(u.uDis,Math.pow(FL.visc,dt));gl.uniform1f(u.uVort,FL.vort);gl.uniform1f(u.uAsp,asp);fingers(u)});
+  flPass(P.vel,FL.v1,{uV:FL.v0.t,uC:FL.curl.t,uI:FL.i0.t},u=>{gl.uniform1f(u.uK,FL.spring);gl.uniform1f(u.uDt,dt);gl.uniform1f(u.uDis,Math.pow(FL.visc,dt));gl.uniform1f(u.uVort,FL.vort);gl.uniform1f(u.uAsp,asp);fingers(u)});
   t=FL.v0;FL.v0=FL.v1;FL.v1=t;
   flPass(P.div,FL.div,{uV:FL.v0.t});
   flPass(P.scale,FL.p1,{uT:FL.p0.t},u=>gl.uniform1f(u.uK,0.8));t=FL.p0;FL.p0=FL.p1;FL.p1=t;
   for(let i=0;i<FL.iters;i++){flPass(P.prs,FL.p1,{uP:FL.p0.t,uD:FL.div.t});t=FL.p0;FL.p0=FL.p1;FL.p1=t}
   flPass(P.grad,FL.v1,{uP:FL.p0.t,uV:FL.v0.t});t=FL.v0;FL.v0=FL.v1;FL.v1=t;
-  const relax=Math.exp(-dt*(TM.on?FL.relax:0.35)),dry=Math.exp(-dt*FL.dry);
+  const relax=Math.exp(-dt*(TM.on?FL.relax:1.5)),dry=Math.exp(-dt*FL.dry);
   flPass(P.ink,FL.i1,{uI:FL.i0.t,uV:FL.v0.t},u=>{gl.uniform1f(u.uDt,dt);gl.uniform1f(u.uRelax,relax);gl.uniform1f(u.uDry,dry);gl.uniform1f(u.uAsp,asp);fingers(u)});
   t=FL.i0;FL.i0=FL.i1;FL.i1=t;
   // wet colour (half screen size)
